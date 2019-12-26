@@ -1,3 +1,7 @@
+[![rtw crate](https://img.shields.io/crates/v/rtw.svg)](https://crates.io/crates/rtw)
+[![rtw documentation](https://docs.rs/rtw/badge.svg)](https://docs.rs/rtw)
+[![GitHub license](https://img.shields.io/github/license/PicoJr/rtw)](https://github.com/PicoJr/rtw/blob/master/LICENSE)
+
 # RTW
 
 CLI Time Tracker.
