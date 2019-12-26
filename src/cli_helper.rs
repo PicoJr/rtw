@@ -8,7 +8,7 @@ pub struct ActivityCli {}
 impl ActivityCli {
     pub fn get_app(&self) -> App {
         App::new("RTW")
-            .version("1.0")
+            .version("0.1.1")
             .author("PicoJr")
             .about("rust time tracking CLI")
             .arg(
