@@ -1,8 +1,9 @@
 [package]
 name = "rtw"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["PicoJr <PicoJr@notanemail.com>"]
 edition = "2018"
+repository = "https://github.com/PicoJr/rtw"
 description = "time tracker command line tool"
 license = "MIT OR Apache-2.0"
 
