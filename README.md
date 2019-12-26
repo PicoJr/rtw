@@ -1,6 +1,7 @@
 [![rtw crate](https://img.shields.io/crates/v/rtw.svg)](https://crates.io/crates/rtw)
 [![rtw documentation](https://docs.rs/rtw/badge.svg)](https://docs.rs/rtw)
 [![GitHub license](https://img.shields.io/github/license/PicoJr/rtw)](https://github.com/PicoJr/rtw/blob/master/LICENSE)
+[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FPicoJr%2Frtw%2Fbadge&style=flat)](https://actions-badge.atrox.dev/PicoJr/rtw/goto)
 
 # RTW
 
