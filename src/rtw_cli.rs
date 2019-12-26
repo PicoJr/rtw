@@ -55,7 +55,15 @@ where
             println!("No filtered data found.");
         } else {
             for finished in activities {
-                println!("{}", finished.get_title());
+                let mut truncated_title = format!("{}", finished.get_title());
+                truncated_title.truncate(12);
+                println!(
+                    "{:<12} {} {} {}",
+                    truncated_title,
+                    finished.get_start_time(),
+                    finished.get_stop_time(),
+                    finished.get_duration()
+                );
             }
         }
         Ok(())
