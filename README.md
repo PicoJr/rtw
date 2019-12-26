@@ -27,7 +27,7 @@ stop current activity: `rtw stop`
 ```
 Recorded learn rust
 Started 2019-12-25T19:43:00
-Ended   2019-12-22T21:00:00
+Ended   2019-12-25T21:00:00
 Total   01:17:000
 ```
 
