@@ -11,6 +11,14 @@ A simplified [timewarrior](https://github.com/GothenburgBitFactory/timewarrior) 
 
 This project is for educational purpose only, for a stable feature-rich CLI time tracker please use timewarrior: https://timewarrior.net/.
 
+## Install
+
+```
+cargo install rtw
+```
+
+[Changelog](CHANGELOG.md)
+
 ## Usage
 
 start a new activity: `rtw start "learn rust"`
