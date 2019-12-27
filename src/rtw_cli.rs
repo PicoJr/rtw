@@ -1,6 +1,6 @@
 use crate::cli_helper;
 use clap::ArgMatches;
-use rtw::{ActiveActivity, ActivityService, Clock};
+use rtw::{ActiveActivity, Activity, ActivityService, Clock};
 
 pub struct RTW<C, S>
 where
@@ -54,7 +54,9 @@ where
         if activities.is_empty() {
             println!("No filtered data found.");
         } else {
-            for finished in activities {
+            let mut sorted: Vec<Activity> = activities;
+            sorted.sort();
+            for finished in sorted {
                 let mut truncated_title = format!("{}", finished.get_title());
                 truncated_title.truncate(12);
                 println!(
