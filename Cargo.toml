@@ -6,6 +6,9 @@ edition = "2018"
 repository = "https://github.com/PicoJr/rtw"
 description = "time tracker command line tool"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["time", "tracker", "cli", "tool"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
