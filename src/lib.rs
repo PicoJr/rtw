@@ -186,6 +186,12 @@ pub trait ActivityService {
     ///
     /// Returns stopped activity if any
     fn stop_current_activity(&mut self, time: AbsTime) -> anyhow::Result<Option<Activity>>;
+    /// Filter finished activities
+    ///
+    /// May fail depending on implementation
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<Activity>>
+    where
+        P: Fn(&Activity) -> bool;
     /// Get finished activities within time range
     ///
     /// May fail depending on backed implementation
@@ -208,18 +214,12 @@ pub trait FinishedActivityRepository {
     ///
     /// May fail depending on backend implementation
     fn write_activity(&mut self, activity: Activity) -> anyhow::Result<()>;
-    /// Get finished activities within time range
+    /// Filter finished activities
     ///
-    /// May fail depending on backed implementation
-    ///
-    /// Returns activities within time range
-    ///
-    /// all activities such that range_start <= activity start <= range_end
-    fn get_activities_within(
-        &self,
-        range_start: AbsTime,
-        range_end: AbsTime,
-    ) -> anyhow::Result<Vec<Activity>>;
+    /// May fail depending on implementation
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<Activity>>
+    where
+        P: Fn(&Activity) -> bool;
 }
 
 /// A service for persisting current activity

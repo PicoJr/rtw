@@ -52,12 +52,21 @@ where
         }
     }
 
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    where
+        P: Fn(&Activity) -> bool,
+    {
+        self.finished.filter_activities(p)
+    }
+
     fn get_activities_within(
         &self,
         range_start: AbsTime,
         range_end: AbsTime,
     ) -> Result<Vec<Activity>, Error> {
-        self.finished.get_activities_within(range_start, range_end)
+        self.filter_activities(|a| {
+            range_start <= a.get_start_time() && a.get_stop_time() <= range_end
+        })
     }
 }
 

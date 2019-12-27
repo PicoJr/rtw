@@ -1,5 +1,5 @@
 use anyhow::{Context, Error};
-use rtw::{AbsTime, Activity, FinishedActivityRepository};
+use rtw::{Activity, FinishedActivityRepository};
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -50,19 +50,11 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         }
     }
 
-    fn get_activities_within(
-        &self,
-        range_start: AbsTime,
-        range_end: AbsTime,
-    ) -> Result<Vec<Activity>, Error> {
-        if !Path::exists(&self.writer_path) {
-            Ok(vec![]) // no finished activities
-        } else {
-            let finished_activities = self.get_finished_activities()?;
-            Ok(finished_activities
-                .into_iter()
-                .filter(|a| range_start <= a.get_start_time() && a.get_start_time() <= range_end)
-                .collect())
-        }
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    where
+        P: Fn(&Activity) -> bool,
+    {
+        let finished_activities = self.get_finished_activities()?;
+        Ok(finished_activities.into_iter().filter(p).collect())
     }
 }

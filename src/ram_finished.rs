@@ -1,5 +1,5 @@
 use anyhow::Error;
-use rtw::{AbsTime, Activity, FinishedActivityRepository};
+use rtw::{Activity, FinishedActivityRepository};
 
 pub struct RAMFinishedActivityRepository {
     activities: Vec<Activity>,
@@ -17,11 +17,10 @@ impl FinishedActivityRepository for RAMFinishedActivityRepository {
         Ok(())
     }
 
-    fn get_activities_within(
-        &self,
-        range_start: AbsTime,
-        range_end: AbsTime,
-    ) -> Result<Vec<Activity>, Error> {
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    where
+        P: Fn(&Activity) -> bool,
+    {
         unimplemented!()
     }
 }
