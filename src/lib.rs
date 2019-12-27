@@ -10,6 +10,7 @@ use chrono::{DateTime, Local};
 use serde::export::fmt::Error;
 use serde::export::Formatter;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::fmt;
 
 /// Absolute dates are parsed and displayed using this format
@@ -26,7 +27,7 @@ pub type Tags = Vec<Tag>;
 /// Absolute Time ie a date
 ///
 /// Date is given in local time for convenience
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct AbsTime(DateTime<Local>);
 
 /// Convert from `DateTime<Local>` to `AbsTime`
@@ -102,7 +103,7 @@ pub trait Clock {
 }
 
 /// A finished Activity (with a stop_time)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Activity {
     /// Activity start time
     start_time: AbsTime,
@@ -128,6 +129,18 @@ impl Activity {
     /// Return activity title (its tags joined by a space)
     pub fn get_title(&self) -> String {
         self.tags.join(" ")
+    }
+}
+
+impl Ord for Activity {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.get_start_time().cmp(&other.get_start_time())
+    }
+}
+
+impl PartialOrd for Activity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

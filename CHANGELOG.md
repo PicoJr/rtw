@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* `summary` output is now sorted by start date
 * `tempfile` and `assert_cmd` no longer required for build
 * CLI version now matches `Cargo.toml` version
 
