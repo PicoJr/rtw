@@ -45,6 +45,7 @@ impl ActivityCli {
                             .help("activities done last week"),
                     ),
             )
+            .subcommand(SubCommand::with_name("continue").about("continue a finished activity"))
     }
 
     pub fn parse_start_args(start_m: &ArgMatches) -> anyhow::Result<(Time, Tags)> {

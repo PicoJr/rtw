@@ -71,6 +71,22 @@ where
         Ok(())
     }
 
+    fn run_continue(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let activities: Vec<Activity> = self.service.filter_activities(|_| true)?;
+        let mut sorted = activities;
+        sorted.sort();
+        match sorted.last() {
+            None => println!("No activity to continue from."),
+            Some(finished) => {
+                self.service.start_activity(ActiveActivity::new(
+                    self.clock.get_time(),
+                    finished.get_tags(),
+                ))?;
+            }
+        }
+        Ok(())
+    }
+
     fn display_current(&mut self) -> anyhow::Result<()> {
         let current = self.service.get_current_activity()?;
         match current {
@@ -91,6 +107,7 @@ where
             ("start", Some(sub_m)) => self.run_start(sub_m),
             ("stop", Some(sub_m)) => self.run_stop(sub_m),
             ("summary", Some(sub_m)) => self.run_summary(sub_m),
+            ("continue", Some(sub_m)) => self.run_continue(sub_m),
             // default case: display current activity
             _ => self.display_current(),
         }

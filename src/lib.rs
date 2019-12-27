@@ -24,7 +24,7 @@ pub type Tag = String;
 /// `Tags` = `Vec<Tag>`
 pub type Tags = Vec<Tag>;
 
-/// Absolute Time ie a date
+/// New Type on chrono::Date<Local>
 ///
 /// Date is given in local time for convenience
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -130,6 +130,10 @@ impl Activity {
     pub fn get_title(&self) -> String {
         self.tags.join(" ")
     }
+    /// Return tags
+    pub fn get_tags(&self) -> Tags {
+        self.tags.clone()
+    }
 }
 
 impl Ord for Activity {
@@ -163,11 +167,22 @@ impl ActiveActivity {
         self.start_time
     }
     /// Return title (activity tags joined by a space)
+    ///
+    /// ```
+    /// # use rtw::{ActiveActivity, AbsTime};
+    /// let activity = ActiveActivity::new(chrono::Local::now().into(), vec![String::from("foo"), String::from("bar")]);
+    /// assert_eq!(activity.get_title(), "foo bar");
+    /// ```
     pub fn get_title(&self) -> String {
         self.tags.join(" ")
     }
     /// Convert active activity to finished activity
     ///
+    /// ```
+    /// # use rtw::{ActiveActivity, AbsTime, Activity};
+    /// let activity = ActiveActivity::new(chrono::Local::now().into(), vec![String::from("foo"), String::from("bar")]);
+    /// let finished: Activity = activity.into_activity(chrono::Local::now().into()).unwrap();
+    /// ```
     /// `stop_time` should be >= `start_time` otherwise error
     pub fn into_activity(self, stop_time: AbsTime) -> anyhow::Result<Activity> {
         if self.start_time <= stop_time {
