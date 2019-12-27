@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* `tempfile` and `assert_cmd` no longer required for build
 * CLI version now matches `Cargo.toml` version
 
 ## [0.1.1](https://crates.io/crates/rtw/0.1.1) Dec 26, 2019
