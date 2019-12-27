@@ -36,9 +36,13 @@ impl ActivityCli {
                     .about("Display finished activities")
                     .arg(
                         Arg::with_name("yesterday")
-                            .short("y")
                             .long("yesterday")
                             .help("activities done yesterday"),
+                    )
+                    .arg(
+                        Arg::with_name("lastweek")
+                            .long("lastweek")
+                            .help("activities done last week"),
                     ),
             )
     }
@@ -79,6 +83,9 @@ impl ActivityCli {
     ) -> anyhow::Result<(AbsTime, AbsTime)> {
         if summary_m.is_present("yesterday") {
             return Ok(clock.yesterday_range());
+        }
+        if summary_m.is_present("lastweek") {
+            return Ok(clock.last_week_range());
         }
         Ok(clock.today_range())
     }

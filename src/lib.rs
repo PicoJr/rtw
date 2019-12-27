@@ -92,6 +92,13 @@ pub trait Clock {
     ///
     /// yesterday: 00:00:00 - 23:59:59
     fn yesterday_range(&self) -> (AbsTime, AbsTime);
+
+    /// Get time range for last week
+    ///
+    /// last week (ISO 8601, week start on monday)
+    ///
+    /// last week: monday: 00:00:00 - sunday: 23:59:59
+    fn last_week_range(&self) -> (AbsTime, AbsTime);
 }
 
 /// A finished Activity (with a stop_time)

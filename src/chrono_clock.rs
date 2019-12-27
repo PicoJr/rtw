@@ -1,3 +1,4 @@
+use chrono::{Datelike, Duration};
 use rtw::{AbsTime, Clock, Time};
 
 pub struct ChronoClock {}
@@ -31,6 +32,18 @@ impl Clock for ChronoClock {
         (
             yesterday.and_hms(0, 0, 0).into(),
             yesterday.and_hms(23, 59, 59).into(),
+        )
+    }
+
+    fn last_week_range(&self) -> (AbsTime, AbsTime) {
+        let today = chrono::Local::today();
+        let weekday = today.weekday();
+        let this_week_monday = today - Duration::days(weekday.num_days_from_monday() as i64);
+        let last_week_monday = this_week_monday - Duration::days(7);
+        let last_week_sunday = this_week_monday - Duration::days(1);
+        (
+            last_week_monday.and_hms(0, 0, 0).into(),
+            last_week_sunday.and_hms(23, 59, 59).into(),
         )
     }
 }
