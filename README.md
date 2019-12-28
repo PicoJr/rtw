@@ -21,7 +21,11 @@ development occurs on `dev`, releases are made on `master` branch.
 cargo install rtw
 ```
 
-[Changelog](CHANGELOG.md)
+Supported OS: Linux.
+
+## Changelog
+
+Please see the [CHANGELOG](CHANGELOG.md) for a release history.
 
 ## Usage
 
@@ -65,3 +69,17 @@ for more details see [exhaustive command usage](commands.md)
 - [x] continue
 - [x] summary
 - [ ] delete
+
+## Implementation
+
+RTW relies on json files for persistence.
+
+Default location is the home (`~`) directory.
+
+```
+~/.rtw.json  # stores current activity
+~/.rtwh.json # stores finished activity
+```
+
+**there is currently no file locking mechanism**: running several `rtw` commands at the same time
+may lead to undefined behavior.
