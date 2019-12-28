@@ -82,6 +82,7 @@ where
                     self.clock.get_time(),
                     finished.get_tags(),
                 ))?;
+                self.display_current()?;
             }
         }
         Ok(())

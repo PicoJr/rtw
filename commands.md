@@ -71,3 +71,12 @@ display finished activities summary for last week: `rtw summary --lastweek`
 ```
 write doc    2019-12-17T19:43:00 2019-12-17T19:45:00 00:03:000
 ```
+
+## Continue Activity
+
+continue last finished activity: `rtw continue`
+
+```
+Tracking write doc
+Total    00:00:00
+```
