@@ -43,6 +43,11 @@ impl ActivityCli {
                         Arg::with_name("lastweek")
                             .long("lastweek")
                             .help("activities done last week"),
+                    )
+                    .arg(
+                        Arg::with_name("id")
+                            .long("id")
+                            .help("display activities id"),
                     ),
             )
             .subcommand(SubCommand::with_name("continue").about("continue a finished activity"))
@@ -81,13 +86,14 @@ impl ActivityCli {
     pub fn parse_summary_args(
         summary_m: &ArgMatches,
         clock: &dyn Clock,
-    ) -> anyhow::Result<(AbsTime, AbsTime)> {
+    ) -> anyhow::Result<((AbsTime, AbsTime), bool)> {
+        let display_id = summary_m.is_present("id");
         if summary_m.is_present("yesterday") {
-            return Ok(clock.yesterday_range());
+            return Ok((clock.yesterday_range(), display_id));
         }
         if summary_m.is_present("lastweek") {
-            return Ok(clock.last_week_range());
+            return Ok((clock.last_week_range(), display_id));
         }
-        Ok(clock.today_range())
+        Ok((clock.today_range(), display_id))
     }
 }

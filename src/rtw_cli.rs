@@ -48,7 +48,7 @@ where
     }
 
     fn run_summary(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (range_start, range_end) =
+        let ((range_start, range_end), display_id) =
             cli_helper::ActivityCli::parse_summary_args(sub_m, &self.clock)?;
         let activities = self.service.get_activities_within(range_start, range_end)?;
         if activities.is_empty() {
@@ -56,16 +56,22 @@ where
         } else {
             let mut sorted: Vec<Activity> = activities;
             sorted.sort();
-            for finished in sorted {
-                let mut truncated_title = format!("{}", finished.get_title());
+            let activities_ids = (0..sorted.len()).rev();
+            let iter = activities_ids.zip(sorted.into_iter());
+            for (id, finished) in iter {
+                let mut truncated_title = finished.get_title().to_string();
                 truncated_title.truncate(12);
-                println!(
+                let mut output = format!(
                     "{:<12} {} {} {}",
                     truncated_title,
                     finished.get_start_time(),
                     finished.get_stop_time(),
                     finished.get_duration()
                 );
+                if display_id {
+                    output = format!("{:>2} {}", id, output);
+                }
+                println!("{}", output)
             }
         }
         Ok(())

@@ -47,7 +47,7 @@ where
                 self.finished
                     .write_activity(current_activity.clone().into_activity(time)?)?;
                 self.current.reset_current_activity()?;
-                Ok(Some(current_activity.clone().into_activity(time)?))
+                Ok(Some(current_activity.into_activity(time)?))
             }
         }
     }
