@@ -69,7 +69,7 @@ impl ActivityCli {
         Ok((time, tags_vec))
     }
 
-    pub fn parse_stop_args(stop_m: &ArgMatches) -> anyhow::Result<(Time)> {
+    pub fn parse_stop_args(stop_m: &ArgMatches) -> anyhow::Result<Time> {
         let time_arg = stop_m.value_of("time");
         if let Some(time_str) = time_arg {
             TimeTools::time_from_str(time_str)
