@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* `summary --id` option
 * doc test
 * `continue` command
 * `CHANGELOG.md`
