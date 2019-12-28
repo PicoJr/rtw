@@ -3,13 +3,13 @@
 [![GitHub license](https://img.shields.io/github/license/PicoJr/rtw)](https://github.com/PicoJr/rtw/blob/master/LICENSE)
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FPicoJr%2Frtw%2Fbadge&style=flat)](https://actions-badge.atrox.dev/PicoJr/rtw/goto)
 
-# RTW
+# RTW - Rust Time Watcher
 
-CLI Time Tracker.
+Command-line interface (CLI) time tracker.
 
-A simplified [timewarrior](https://github.com/GothenburgBitFactory/timewarrior) in Rust.
+This project is for educational purpose only. It is a _partial_ Rust implementation of [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
 
-This project is for educational purpose only, for a stable feature-rich CLI time tracker please use timewarrior: https://timewarrior.net/.
+> For a stable feature-rich CLI time tracker, please use Timewarrior: https://timewarrior.net/.
 
 ## Development
 
@@ -27,24 +27,40 @@ Supported OS: Linux.
 
 Please see the [CHANGELOG](CHANGELOG.md) for a release history.
 
-## Usage
+## Basic Usage
 
-start a new activity: `rtw start "learn rust"`
+### Start tracking an activity
 
+Example:
 ```bash
+rtw start "learn rust"
+```
+
+Example output: 
+```
 Tracking learn rust
 Started  2019-12-25T19:43:00
 ```
 
-display current activity: `rtw`
+### Display current activity
 
+``` bash
+rtw
+```
+
+Example output: 
 ```
 Tracking learn rust
 Total    01:15:00
 ```
 
-stop current activity: `rtw stop`
+### Stop current activity
 
+```bash
+rtw stop
+```
+
+Example output: 
 ```
 Recorded learn rust
 Started 2019-12-25T19:43:00
@@ -52,16 +68,23 @@ Ended   2019-12-25T21:00:00
 Total   01:17:000
 ```
 
-show today summary: `rtw summary`
+### Display the day's activity summary
 
+```bash
+rtw summary
+```
+
+Example output: 
 ```
 read the doc 2019-12-25T11:49:30 2019-12-25T11:53:36 00:04:246
 eat cookies  2019-12-25T12:08:49 2019-12-25T12:12:14 00:03:204
 ```
 
-for more details see [exhaustive command usage](commands.md)
+### More?
 
-## Commands
+For further details see [Full Usage](commands.md).
+
+## TODO
 
 - [x] start
 - [x] stop
