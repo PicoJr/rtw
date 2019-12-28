@@ -62,6 +62,6 @@ for more details see [exhaustive command usage](commands.md)
 - [x] start
 - [x] stop
 - [ ] track
-- [ ] continue
+- [x] continue
 - [x] summary
 - [ ] delete
