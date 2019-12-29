@@ -1,6 +1,6 @@
 use anyhow::Error;
 use rtw::{
-    AbsTime, ActiveActivity, Activity, ActivityService, CurrentActivityRepository,
+    AbsTime, ActiveActivity, Activity, ActivityId, ActivityService, CurrentActivityRepository,
     FinishedActivityRepository,
 };
 
@@ -52,21 +52,11 @@ where
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
     where
-        P: Fn(&Activity) -> bool,
+        P: Fn(&(ActivityId, Activity)) -> bool,
     {
         self.finished.filter_activities(p)
-    }
-
-    fn get_activities_within(
-        &self,
-        range_start: AbsTime,
-        range_end: AbsTime,
-    ) -> Result<Vec<Activity>, Error> {
-        self.filter_activities(|a| {
-            range_start <= a.get_start_time() && a.get_stop_time() <= range_end
-        })
     }
 }
 
@@ -78,7 +68,7 @@ mod tests {
     use crate::ram_current::RAMCurrentActivityRepository;
     use crate::ram_finished::RAMFinishedActivityRepository;
     use crate::service::Service;
-    use rtw::{ActiveActivity, ActivityService, Clock};
+    use rtw::{AbsTime, ActiveActivity, ActivityService, Clock};
     use tempfile::{tempdir, TempDir};
 
     fn build_ram_service() -> Service<RAMFinishedActivityRepository, RAMCurrentActivityRepository> {
@@ -294,7 +284,9 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let (today_start, today_end) = clock.today_range();
-        let activities = service.get_activities_within(today_start, today_end);
+        let activities = service.filter_activities(|(_id, a)| {
+            today_start <= a.get_start_time() && a.get_start_time() <= today_end
+        });
         assert!(activities.is_ok());
     }
 
@@ -303,16 +295,16 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
-        let range_start = today.and_hms(8, 0, 0);
-        let activity_start = today.and_hms(8, 30, 0);
-        let activity_end = today.and_hms(8, 45, 0);
-        let range_end = today.and_hms(9, 0, 0);
-        let _start = service.start_activity(ActiveActivity::new(
-            activity_start.into(),
-            vec![String::from("a")],
-        ));
-        let _stop = service.stop_current_activity(activity_end.into());
-        let activities = service.get_activities_within(range_start.into(), range_end.into());
+        let range_start: AbsTime = today.and_hms(8, 0, 0).into();
+        let activity_start: AbsTime = today.and_hms(8, 30, 0).into();
+        let activity_end: AbsTime = today.and_hms(8, 45, 0).into();
+        let range_end: AbsTime = today.and_hms(9, 0, 0).into();
+        let _start =
+            service.start_activity(ActiveActivity::new(activity_start, vec![String::from("a")]));
+        let _stop = service.stop_current_activity(activity_end);
+        let activities = service.filter_activities(|(_id, a)| {
+            range_start <= a.get_start_time() && a.get_start_time() <= range_end
+        });
         assert!(!activities.unwrap().is_empty());
     }
 
@@ -321,16 +313,16 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
-        let range_start = today.and_hms(9, 0, 0);
-        let activity_start = today.and_hms(8, 30, 0);
-        let activity_end = today.and_hms(8, 45, 0);
-        let range_end = today.and_hms(10, 0, 0);
-        let _start = service.start_activity(ActiveActivity::new(
-            activity_start.into(),
-            vec![String::from("a")],
-        ));
-        let _stop = service.stop_current_activity(activity_end.into());
-        let activities = service.get_activities_within(range_start.into(), range_end.into());
+        let range_start: AbsTime = today.and_hms(9, 0, 0).into();
+        let activity_start: AbsTime = today.and_hms(8, 30, 0).into();
+        let activity_end: AbsTime = today.and_hms(8, 45, 0).into();
+        let range_end: AbsTime = today.and_hms(10, 0, 0).into();
+        let _start =
+            service.start_activity(ActiveActivity::new(activity_start, vec![String::from("a")]));
+        let _stop = service.stop_current_activity(activity_end);
+        let activities = service.filter_activities(|(_id, a)| {
+            range_start <= a.get_start_time() && a.get_start_time() <= range_end
+        });
         assert!(activities.unwrap().is_empty());
     }
 }

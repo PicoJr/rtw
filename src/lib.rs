@@ -23,6 +23,8 @@ pub const RELATIVE_TIME_REGEX: &str = r"(\d+)m";
 pub type Tag = String;
 /// `Tags` = `Vec<Tag>`
 pub type Tags = Vec<Tag>;
+/// `ActivityId` = `usize`
+pub type ActivityId = usize;
 
 /// New Type on chrono::Date<Local>
 ///
@@ -224,21 +226,13 @@ pub trait ActivityService {
     /// Filter finished activities
     ///
     /// May fail depending on implementation
-    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<Activity>>
+    ///
+    /// Returns finished activities sorted by start date
+    ///
+    /// ActivityId: 0 <=> last finished activity
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
-        P: Fn(&Activity) -> bool;
-    /// Get finished activities within time range
-    ///
-    /// May fail depending on backed implementation
-    ///
-    /// Returns activities within time range
-    ///
-    /// all activities such that range_start <= activity start <= range_end
-    fn get_activities_within(
-        &self,
-        range_start: AbsTime,
-        range_end: AbsTime,
-    ) -> anyhow::Result<Vec<Activity>>;
+        P: Fn(&(ActivityId, Activity)) -> bool;
 }
 
 /// A service for persisting finished activities
@@ -252,9 +246,13 @@ pub trait FinishedActivityRepository {
     /// Filter finished activities
     ///
     /// May fail depending on implementation
-    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<Activity>>
+    ///
+    /// Returns finished activities sorted by start date
+    ///
+    /// ActivityId: 0 <=> last finished activity
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
-        P: Fn(&Activity) -> bool;
+        P: Fn(&(ActivityId, Activity)) -> bool;
 }
 
 /// A service for persisting current activity

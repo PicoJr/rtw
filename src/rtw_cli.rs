@@ -1,6 +1,6 @@
 use crate::cli_helper;
 use clap::ArgMatches;
-use rtw::{ActiveActivity, Activity, ActivityService, Clock};
+use rtw::{ActiveActivity, Activity, ActivityId, ActivityService, Clock};
 
 pub struct RTW<C, S>
 where
@@ -50,15 +50,13 @@ where
     fn run_summary(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
         let ((range_start, range_end), display_id) =
             cli_helper::ActivityCli::parse_summary_args(sub_m, &self.clock)?;
-        let activities = self.service.get_activities_within(range_start, range_end)?;
+        let activities = self.service.filter_activities(|(_i, a)| {
+            range_start <= a.get_start_time() && a.get_start_time() <= range_end
+        })?;
         if activities.is_empty() {
             println!("No filtered data found.");
         } else {
-            let mut sorted: Vec<Activity> = activities;
-            sorted.sort();
-            let activities_ids = (0..sorted.len()).rev();
-            let iter = activities_ids.zip(sorted.into_iter());
-            for (id, finished) in iter {
+            for (id, finished) in activities {
                 let mut truncated_title = finished.get_title().to_string();
                 truncated_title.truncate(12);
                 let mut output = format!(
@@ -78,12 +76,11 @@ where
     }
 
     fn run_continue(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let activities: Vec<Activity> = self.service.filter_activities(|_| true)?;
-        let mut sorted = activities;
-        sorted.sort();
-        match sorted.last() {
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_, _)| true)?;
+        match activities.last() {
             None => println!("No activity to continue from."),
-            Some(finished) => {
+            Some((_id, finished)) => {
                 self.service.start_activity(ActiveActivity::new(
                     self.clock.get_time(),
                     finished.get_tags(),

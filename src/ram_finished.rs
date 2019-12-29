@@ -1,5 +1,5 @@
 use anyhow::Error;
-use rtw::{Activity, FinishedActivityRepository};
+use rtw::{Activity, ActivityId, FinishedActivityRepository};
 
 pub struct RAMFinishedActivityRepository {
     activities: Vec<Activity>,
@@ -17,9 +17,9 @@ impl FinishedActivityRepository for RAMFinishedActivityRepository {
         Ok(())
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
     where
-        P: Fn(&Activity) -> bool,
+        P: Fn(&(ActivityId, Activity)) -> bool,
     {
         unimplemented!()
     }

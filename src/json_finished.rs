@@ -1,5 +1,5 @@
 use anyhow::{Context, Error};
-use rtw::{Activity, FinishedActivityRepository};
+use rtw::{Activity, ActivityId, FinishedActivityRepository};
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -50,11 +50,16 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<Activity>, Error>
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
     where
-        P: Fn(&Activity) -> bool,
+        P: Fn(&(ActivityId, Activity)) -> bool,
     {
-        let finished_activities = self.get_finished_activities()?;
-        Ok(finished_activities.into_iter().filter(p).collect())
+        let mut finished_activities = self.get_finished_activities()?;
+        finished_activities.sort();
+        let indexed_finished_activities = (0..finished_activities.len())
+            .rev()
+            .zip(finished_activities);
+        let filtered = indexed_finished_activities.filter(p);
+        Ok(filtered.collect())
     }
 }
