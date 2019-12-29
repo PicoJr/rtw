@@ -282,7 +282,7 @@ mod tests {
     fn test_json_json_summary_nothing() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
-        let mut service = build_json_service(&test_dir);
+        let service = build_json_service(&test_dir);
         let (today_start, today_end) = clock.today_range();
         let activities = service.filter_activities(|(_id, a)| {
             today_start <= a.get_start_time() && a.get_start_time() <= today_end
