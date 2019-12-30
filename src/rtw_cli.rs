@@ -1,6 +1,6 @@
 use crate::cli_helper;
 use clap::ArgMatches;
-use rtw::{ActiveActivity, Activity, ActivityId, ActivityService, Clock};
+use rtw::{Activity, ActivityId, ActivityService, Clock, OngoingActivity};
 
 pub struct RTW<C, S>
 where
@@ -22,10 +22,10 @@ where
 
     fn run_start(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
         let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m)?;
-        let abs_start_time = self.clock.abs_time(start_time);
+        let abs_start_time = self.clock.date_time(start_time);
         let started = self
             .service
-            .start_activity(ActiveActivity::new(abs_start_time, tags))?;
+            .start_activity(OngoingActivity::new(abs_start_time, tags))?;
         println!("Tracking {}", started.get_title());
         println!("Started  {}", started.get_start_time());
         Ok(())
@@ -33,7 +33,7 @@ where
 
     fn run_stop(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
         let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m)?;
-        let abs_stop_time = self.clock.abs_time(stop_time);
+        let abs_stop_time = self.clock.date_time(stop_time);
         let stopped_maybe = self.service.stop_current_activity(abs_stop_time)?;
         match stopped_maybe {
             Some(stopped) => {
@@ -81,7 +81,7 @@ where
         match activities.last() {
             None => println!("No activity to continue from."),
             Some((_id, finished)) => {
-                self.service.start_activity(ActiveActivity::new(
+                self.service.start_activity(OngoingActivity::new(
                     self.clock.get_time(),
                     finished.get_tags(),
                 ))?;

@@ -1,7 +1,7 @@
 use anyhow::Error;
 use rtw::{
-    AbsTime, ActiveActivity, Activity, ActivityId, ActivityService, CurrentActivityRepository,
-    FinishedActivityRepository,
+    Activity, ActivityId, ActivityService, CurrentActivityRepository, DateTimeW,
+    FinishedActivityRepository, OngoingActivity,
 };
 
 pub struct Service<F, C>
@@ -28,18 +28,18 @@ where
     F: FinishedActivityRepository,
     C: CurrentActivityRepository,
 {
-    fn get_current_activity(&self) -> anyhow::Result<Option<ActiveActivity>> {
+    fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>> {
         self.current.get_current_activity()
     }
 
-    fn start_activity(&mut self, activity: ActiveActivity) -> anyhow::Result<ActiveActivity> {
+    fn start_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<OngoingActivity> {
         self.stop_current_activity(activity.start_time)?;
-        let started = ActiveActivity::new(activity.start_time, activity.tags);
+        let started = OngoingActivity::new(activity.start_time, activity.tags);
         self.current.set_current_activity(started.clone())?;
         Ok(started)
     }
 
-    fn stop_current_activity(&mut self, time: AbsTime) -> anyhow::Result<Option<Activity>> {
+    fn stop_current_activity(&mut self, time: DateTimeW) -> anyhow::Result<Option<Activity>> {
         let current = self.current.get_current_activity()?;
         match current {
             None => Ok(None),
@@ -68,7 +68,7 @@ mod tests {
     use crate::ram_current::RAMCurrentActivityRepository;
     use crate::ram_finished::RAMFinishedActivityRepository;
     use crate::service::Service;
-    use rtw::{AbsTime, ActiveActivity, ActivityService, Clock};
+    use rtw::{ActivityService, Clock, DateTimeW, OngoingActivity};
     use tempfile::{tempdir, TempDir};
 
     fn build_ram_service() -> Service<RAMFinishedActivityRepository, RAMCurrentActivityRepository> {
@@ -89,7 +89,7 @@ mod tests {
         let clock = ChronoClock {};
         let mut service = build_ram_service();
         assert!(service
-            .start_activity(ActiveActivity {
+            .start_activity(OngoingActivity {
                 start_time: clock.get_time(),
                 tags: vec![String::from("a")],
             })
@@ -102,7 +102,7 @@ mod tests {
         let clock = ChronoClock {};
         let mut service = build_ram_service();
         assert!(service
-            .start_activity(ActiveActivity {
+            .start_activity(OngoingActivity {
                 start_time: clock.get_time(),
                 tags: vec![String::from("a")],
             })
@@ -116,7 +116,7 @@ mod tests {
     fn test_ram_ram_start_stop_start() {
         let clock = ChronoClock {};
         let mut service = build_ram_service();
-        let start_0 = service.start_activity(ActiveActivity {
+        let start_0 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -125,7 +125,7 @@ mod tests {
         let stop = service.stop_current_activity(clock.get_time());
         assert!(stop.is_ok());
         assert!(service.get_current_activity().unwrap().is_none());
-        let start_1 = service.start_activity(ActiveActivity {
+        let start_1 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("b")],
         });
@@ -158,7 +158,7 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_ram_json_service(&test_dir);
         assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        let start = service.start_activity(ActiveActivity {
+        let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -173,7 +173,7 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_ram_json_service(&test_dir);
-        let start = service.start_activity(ActiveActivity {
+        let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -188,7 +188,7 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_ram_json_service(&test_dir);
-        let start_0 = service.start_activity(ActiveActivity {
+        let start_0 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -197,7 +197,7 @@ mod tests {
         let stop = service.stop_current_activity(clock.get_time());
         assert!(stop.is_ok());
         assert!(service.get_current_activity().unwrap().is_none());
-        let start_1 = service.start_activity(ActiveActivity {
+        let start_1 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("b")],
         });
@@ -231,7 +231,7 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        let start = service.start_activity(ActiveActivity {
+        let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -246,7 +246,7 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
-        let start = service.start_activity(ActiveActivity {
+        let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -261,7 +261,7 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
-        let start_0 = service.start_activity(ActiveActivity {
+        let start_0 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
         });
@@ -270,7 +270,7 @@ mod tests {
         let stop = service.stop_current_activity(clock.get_time());
         assert!(stop.is_ok());
         assert!(service.get_current_activity().unwrap().is_none());
-        let start_1 = service.start_activity(ActiveActivity {
+        let start_1 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("b")],
         });
@@ -295,12 +295,14 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
-        let range_start: AbsTime = today.and_hms(8, 0, 0).into();
-        let activity_start: AbsTime = today.and_hms(8, 30, 0).into();
-        let activity_end: AbsTime = today.and_hms(8, 45, 0).into();
-        let range_end: AbsTime = today.and_hms(9, 0, 0).into();
-        let _start =
-            service.start_activity(ActiveActivity::new(activity_start, vec![String::from("a")]));
+        let range_start: DateTimeW = today.and_hms(8, 0, 0).into();
+        let activity_start: DateTimeW = today.and_hms(8, 30, 0).into();
+        let activity_end: DateTimeW = today.and_hms(8, 45, 0).into();
+        let range_end: DateTimeW = today.and_hms(9, 0, 0).into();
+        let _start = service.start_activity(OngoingActivity::new(
+            activity_start,
+            vec![String::from("a")],
+        ));
         let _stop = service.stop_current_activity(activity_end);
         let activities = service.filter_activities(|(_id, a)| {
             range_start <= a.get_start_time() && a.get_start_time() <= range_end
@@ -313,12 +315,14 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
-        let range_start: AbsTime = today.and_hms(9, 0, 0).into();
-        let activity_start: AbsTime = today.and_hms(8, 30, 0).into();
-        let activity_end: AbsTime = today.and_hms(8, 45, 0).into();
-        let range_end: AbsTime = today.and_hms(10, 0, 0).into();
-        let _start =
-            service.start_activity(ActiveActivity::new(activity_start, vec![String::from("a")]));
+        let range_start: DateTimeW = today.and_hms(9, 0, 0).into();
+        let activity_start: DateTimeW = today.and_hms(8, 30, 0).into();
+        let activity_end: DateTimeW = today.and_hms(8, 45, 0).into();
+        let range_end: DateTimeW = today.and_hms(10, 0, 0).into();
+        let _start = service.start_activity(OngoingActivity::new(
+            activity_start,
+            vec![String::from("a")],
+        ));
         let _stop = service.stop_current_activity(activity_end);
         let activities = service.filter_activities(|(_id, a)| {
             range_start <= a.get_start_time() && a.get_start_time() <= range_end

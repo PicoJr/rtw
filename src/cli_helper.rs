@@ -1,7 +1,7 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::time_tools::TimeTools;
-use rtw::{AbsTime, Clock, Tags, Time};
+use rtw::{Clock, DateTimeW, Tags, Time};
 
 pub struct ActivityCli {}
 
@@ -86,7 +86,7 @@ impl ActivityCli {
     pub fn parse_summary_args(
         summary_m: &ArgMatches,
         clock: &dyn Clock,
-    ) -> anyhow::Result<((AbsTime, AbsTime), bool)> {
+    ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
         let display_id = summary_m.is_present("id");
         if summary_m.is_present("yesterday") {
             return Ok((clock.yesterday_range(), display_id));

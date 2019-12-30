@@ -1,7 +1,7 @@
-use rtw::{ActiveActivity, CurrentActivityRepository};
+use rtw::{CurrentActivityRepository, OngoingActivity};
 
 pub struct RAMCurrentActivityRepository {
-    current: Option<ActiveActivity>,
+    current: Option<OngoingActivity>,
 }
 
 impl RAMCurrentActivityRepository {
@@ -11,11 +11,11 @@ impl RAMCurrentActivityRepository {
 }
 
 impl CurrentActivityRepository for RAMCurrentActivityRepository {
-    fn get_current_activity(&self) -> anyhow::Result<Option<ActiveActivity>> {
+    fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>> {
         Ok(self.current.clone())
     }
 
-    fn set_current_activity(&mut self, activity: ActiveActivity) -> anyhow::Result<()> {
+    fn set_current_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<()> {
         self.current = Some(activity);
         Ok(())
     }

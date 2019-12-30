@@ -26,7 +26,7 @@ impl TimeTools {
 
     fn abs_time_from_str(s: &str) -> anyhow::Result<Time> {
         match Local.datetime_from_str(s, DATETIME_FMT) {
-            Ok(d) => Ok(Time::Abs(d.into())),
+            Ok(d) => Ok(Time::DateTime(d.into())),
             Err(_) => Err(anyhow!("unrecognized time format")),
         }
     }
