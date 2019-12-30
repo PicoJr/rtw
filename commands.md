@@ -19,6 +19,8 @@
          * [Continue last finished activity](#continue-last-finished-activity)
       * [Delete Activity](#delete-activity)
          * [Delete Activity with id](#delete-activity-with-id)
+      * [Track a finished activity](#track-a-finished-activity)
+         * [Track a finished activity with dates](#track-a-finished-activity-with-dates)
 
 <!--te-->
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
