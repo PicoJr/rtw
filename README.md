@@ -84,15 +84,6 @@ eat cookies  2019-12-25T12:08:49 2019-12-25T12:12:14 00:03:204
 
 For further details see [Full Usage](commands.md).
 
-## TODO
-
-- [x] start
-- [x] stop
-- [ ] track
-- [x] continue
-- [x] summary
-- [x] delete
-
 ## Implementation
 
 RTW relies on json files for persistence.
