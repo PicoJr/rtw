@@ -13,7 +13,9 @@ This project is for educational purpose only. It is a _partial_ Rust implementat
 
 ## Development
 
-development occurs on `dev`, releases are made on `master` branch.
+Development occurs on `dev`, releases are made on `master` branch.
+
+Requires [Rust 1.40](https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1400-2019-12-19)
 
 ## Install
 
