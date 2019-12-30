@@ -16,9 +16,13 @@
          * [Display finished activities summary for last week](#display-finished-activities-summary-for-last-week)
          * [Display finished activities id](#display-finished-activities-id)
       * [Continue Activity](#continue-activity)
-         * [continue last finished activity](#continue-last-finished-activity)
+         * [Continue last finished activity](#continue-last-finished-activity)
+      * [Delete Activity](#delete-activity)
+         * [Delete Activity with id](#delete-activity-with-id)
 
 <!--te-->
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
 ## Start New Activity
 
 ### Start tracking an activity now
@@ -163,7 +167,7 @@ Example output:
 
 ## Continue Activity
 
-### continue last finished activity
+### Continue last finished activity
 
 Example:
 ```
@@ -174,4 +178,21 @@ Example output:
 ```
 Tracking write doc
 Total    00:00:00
+```
+
+## Delete Activity
+
+### Delete Activity with id
+
+Example:
+```
+rtw delete 1
+```
+
+Example output:
+```
+Deleted write doc
+Started 2019-12-25T19:43:00
+Ended   2019-12-25T19:45:00
+Total   00:02:00
 ```
