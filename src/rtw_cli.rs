@@ -75,7 +75,7 @@ where
         Ok(())
     }
 
-    fn run_continue(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
+    fn run_continue(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
         let activities: Vec<(ActivityId, Activity)> =
             self.service.filter_activities(|(_, _)| true)?;
         match activities.last() {
