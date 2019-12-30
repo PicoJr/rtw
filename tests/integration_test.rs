@@ -114,4 +114,19 @@ mod tests {
             .assert()
             .success();
     }
+
+    #[test]
+    fn track_date() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("2019-12-25T19:43:00")
+            .arg("2019-12-25T19:45:00")
+            .arg("foo")
+            .assert()
+            .success();
+    }
 }

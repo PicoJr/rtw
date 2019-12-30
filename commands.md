@@ -196,3 +196,20 @@ Started 2019-12-25T19:43:00
 Ended   2019-12-25T19:45:00
 Total   00:02:00
 ```
+
+## Track a finished activity
+
+### Track a finished activity with dates
+
+Example:
+```
+rtw track  2019-12-25T19:43:00 2019-12-25T19:45:00 write doc
+```
+
+Example ouput
+```
+Recorded write doc
+Started 2019-12-25T19:43:00
+Ended   2019-12-25T19:45:00
+Total   00:02:00
+```
