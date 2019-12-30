@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* This release requires [Rust 1.40](https://github.com/rust-lang/rust/blob/master/RELEASES.md#version-1400-2019-12-19)
 * `AbsTime` renamed to `DateTimeW`
 * `ActiveActivity` renamed to `OngoingActivity`
 
