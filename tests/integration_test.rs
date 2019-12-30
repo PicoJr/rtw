@@ -42,4 +42,76 @@ mod tests {
             .success()
             .stdout("No activity to continue from.\n");
     }
+
+    #[test]
+    fn delete_none() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("delete")
+            .arg("42")
+            .assert()
+            .success()
+            .stdout("No activity found for id 42.\n");
+    }
+
+    #[test]
+    fn start_now() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn start_then_stop() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("stop")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn start_then_stop_then_delete() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("stop")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("delete")
+            .arg("0")
+            .assert()
+            .success();
+    }
 }

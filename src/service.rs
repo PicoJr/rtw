@@ -58,6 +58,10 @@ where
     {
         self.finished.filter_activities(p)
     }
+
+    fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
+        self.finished.delete_activity(id)
+    }
 }
 
 #[cfg(test)]

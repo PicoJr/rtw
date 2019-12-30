@@ -91,6 +91,21 @@ where
         Ok(())
     }
 
+    fn run_delete(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let id = cli_helper::ActivityCli::parse_delete_args(sub_m)?;
+        let deleted_maybe = self.service.delete_activity(id)?;
+        match deleted_maybe {
+            None => println!("No activity found for id {}.", id),
+            Some(deleted) => {
+                println!("Deleted {}", deleted.get_title());
+                println!("Started {:>20}", deleted.get_start_time());
+                println!("Ended   {:>20}", deleted.get_stop_time());
+                println!("Total   {:>20}", deleted.get_duration());
+            }
+        }
+        Ok(())
+    }
+
     fn display_current(&mut self) -> anyhow::Result<()> {
         let current = self.service.get_current_activity()?;
         match current {
@@ -112,6 +127,7 @@ where
             ("stop", Some(sub_m)) => self.run_stop(sub_m),
             ("summary", Some(sub_m)) => self.run_summary(sub_m),
             ("continue", Some(sub_m)) => self.run_continue(sub_m),
+            ("delete", Some(sub_m)) => self.run_delete(sub_m),
             // default case: display current activity
             _ => self.display_current(),
         }

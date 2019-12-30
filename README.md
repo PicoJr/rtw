@@ -91,7 +91,7 @@ For further details see [Full Usage](commands.md).
 - [ ] track
 - [x] continue
 - [x] summary
-- [ ] delete
+- [x] delete
 
 ## Implementation
 

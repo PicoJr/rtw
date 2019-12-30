@@ -17,10 +17,14 @@ impl FinishedActivityRepository for RAMFinishedActivityRepository {
         Ok(())
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
+    fn filter_activities<P>(&self, _p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
+        unimplemented!()
+    }
+
+    fn delete_activity(&self, _id: ActivityId) -> Result<Option<Activity>, Error> {
         unimplemented!()
     }
 }

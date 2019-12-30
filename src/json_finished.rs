@@ -31,6 +31,15 @@ impl JsonFinishedActivityRepository {
             Ok(vec![])
         }
     }
+
+    fn get_sorted_activities(&self) -> Result<Vec<(ActivityId, Activity)>, Error> {
+        let mut finished_activities = self.get_finished_activities()?;
+        finished_activities.sort();
+        Ok((0..finished_activities.len())
+            .rev()
+            .zip(finished_activities)
+            .collect())
+    }
 }
 
 impl FinishedActivityRepository for JsonFinishedActivityRepository {
@@ -44,7 +53,10 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         } else {
             let mut activities = self.get_finished_activities()?;
             activities.push(activity);
-            let file = OpenOptions::new().write(true).open(&self.writer_path)?;
+            let file = OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .open(&self.writer_path)?;
             serde_json::to_writer(file, &activities)?;
             Ok(())
         }
@@ -54,12 +66,28 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
-        let mut finished_activities = self.get_finished_activities()?;
-        finished_activities.sort();
-        let indexed_finished_activities = (0..finished_activities.len())
-            .rev()
-            .zip(finished_activities);
-        let filtered = indexed_finished_activities.filter(p);
+        let indexed_finished_activities = self.get_sorted_activities()?;
+        let filtered = indexed_finished_activities.into_iter().filter(p);
         Ok(filtered.collect())
+    }
+
+    fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
+        let finished_activities = self.get_sorted_activities()?;
+        let mut remove = Option::None;
+        let mut keep: Vec<Activity> = vec![];
+        for (i, a) in finished_activities {
+            if i == id {
+                remove = Option::Some(a);
+            } else {
+                keep.push(a);
+            }
+        }
+        let file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&self.writer_path)?;
+        serde_json::to_writer(file, &keep)?;
+        Ok(remove)
     }
 }

@@ -1,7 +1,8 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::time_tools::TimeTools;
-use rtw::{Clock, DateTimeW, Tags, Time};
+use rtw::{ActivityId, Clock, DateTimeW, Tags, Time};
+use std::str::FromStr;
 
 pub struct ActivityCli {}
 
@@ -51,6 +52,11 @@ impl ActivityCli {
                     ),
             )
             .subcommand(SubCommand::with_name("continue").about("continue a finished activity"))
+            .subcommand(
+                SubCommand::with_name("delete")
+                    .about("Delete activity")
+                    .arg(Arg::with_name("id").required(true).help("activity id")),
+            )
     }
 
     pub fn parse_start_args(start_m: &ArgMatches) -> anyhow::Result<(Time, Tags)> {
@@ -95,5 +101,16 @@ impl ActivityCli {
             return Ok((clock.last_week_range(), display_id));
         }
         Ok((clock.today_range(), display_id))
+    }
+
+    pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
+        let id_opt = delete_m
+            .value_of("id")
+            .map(|id_str| usize::from_str(id_str));
+        if let Some(Ok(id)) = id_opt {
+            Ok(id)
+        } else {
+            Err(anyhow::anyhow!("could not parse id"))
+        }
     }
 }

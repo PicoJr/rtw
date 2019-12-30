@@ -236,6 +236,12 @@ pub trait ActivityService {
     fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool;
+    /// Delete activity with id
+    ///
+    /// May fail depending on implementation
+    ///
+    /// Returns deleted activity if successful
+    fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>>;
 }
 
 /// A service for persisting and querying finished activities
@@ -256,6 +262,12 @@ pub trait FinishedActivityRepository {
     fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool;
+    /// Delete activity with id
+    ///
+    /// May fail depending on implementation
+    ///
+    /// Returns deleted activity if successful
+    fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>>;
 }
 
 /// A service for persisting and querying current activity
