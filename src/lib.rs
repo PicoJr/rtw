@@ -70,7 +70,6 @@ impl fmt::Display for DurationW {
 }
 
 /// Time (absolute or relative)
-#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Time {
     /// Now, can be converted to `DateTimeW` using `Clock.date_time`
