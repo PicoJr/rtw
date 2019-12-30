@@ -62,6 +62,11 @@ where
     fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
         self.finished.delete_activity(id)
     }
+
+    fn track_activity(&mut self, activity: Activity) -> Result<Activity, Error> {
+        self.finished.write_activity(activity.clone())?;
+        Ok(activity)
+    }
 }
 
 #[cfg(test)]

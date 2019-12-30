@@ -242,6 +242,12 @@ pub trait ActivityService {
     ///
     /// Returns deleted activity if successful
     fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>>;
+    /// Track a finished activity
+    ///
+    /// May fail depending on backend implementation
+    ///
+    /// Returns tracked activity if successful
+    fn track_activity(&mut self, activity: Activity) -> anyhow::Result<Activity>;
 }
 
 /// A service for persisting and querying finished activities

@@ -31,6 +31,18 @@ where
         Ok(())
     }
 
+    fn run_track(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let (start_time, stop_time, tags) = cli_helper::ActivityCli::parse_track_args(sub_m)?;
+        let activity = OngoingActivity::new(self.clock.date_time(start_time), tags)
+            .into_activity(self.clock.date_time(stop_time))?;
+        let tracked = self.service.track_activity(activity)?;
+        println!("Recorded {}", tracked.get_title());
+        println!("Started {:>20}", tracked.get_start_time());
+        println!("Ended   {:>20}", tracked.get_stop_time());
+        println!("Total   {:>20}", tracked.get_duration());
+        Ok(())
+    }
+
     fn run_stop(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
         let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m)?;
         let abs_stop_time = self.clock.date_time(stop_time);
@@ -128,6 +140,7 @@ where
             ("summary", Some(sub_m)) => self.run_summary(sub_m),
             ("continue", Some(sub_m)) => self.run_continue(sub_m),
             ("delete", Some(sub_m)) => self.run_delete(sub_m),
+            ("track", Some(sub_m)) => self.run_track(sub_m),
             // default case: display current activity
             _ => self.display_current(),
         }

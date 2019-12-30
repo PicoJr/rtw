@@ -28,6 +28,13 @@ impl ActivityCli {
                     .arg(Arg::with_name("tags").multiple(true).help("tags")),
             )
             .subcommand(
+                SubCommand::with_name("track")
+                    .about("Track a finished activity")
+                    .arg(Arg::with_name("start").required(true).help("time"))
+                    .arg(Arg::with_name("stop").required(true).help("time"))
+                    .arg(Arg::with_name("tags").multiple(true).help("tags")),
+            )
+            .subcommand(
                 SubCommand::with_name("stop")
                     .about("Stop activity")
                     .arg(Arg::with_name("time").help("time")),
@@ -51,7 +58,7 @@ impl ActivityCli {
                             .help("display activities id"),
                     ),
             )
-            .subcommand(SubCommand::with_name("continue").about("continue a finished activity"))
+            .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
             .subcommand(
                 SubCommand::with_name("delete")
                     .about("Delete activity")
@@ -78,6 +85,22 @@ impl ActivityCli {
             }
         }
         Ok((time, tags_vec))
+    }
+
+    pub fn parse_track_args(track_m: &ArgMatches) -> anyhow::Result<(Time, Time, Tags)> {
+        let start_time_arg = track_m.value_of("start").expect("start time is required");
+        let start_time = TimeTools::time_from_str(start_time_arg)?;
+        let stop_time_arg = track_m.value_of("stop").expect("stop time is required");
+        let stop_time = TimeTools::time_from_str(stop_time_arg)?;
+        let tags = track_m
+            .values_of("tags")
+            .expect("at least one tag is required");
+        let tags = tags.map(String::from);
+        let mut tags_vec: Tags = vec![];
+        for tag in tags {
+            tags_vec.push(tag);
+        }
+        Ok((start_time, stop_time, tags_vec))
     }
 
     pub fn parse_stop_args(stop_m: &ArgMatches) -> anyhow::Result<Time> {
