@@ -1,5 +1,5 @@
 use anyhow::Context;
-use rtw::{ActiveActivity, CurrentActivityRepository};
+use rtw::{CurrentActivityRepository, OngoingActivity};
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -17,17 +17,17 @@ impl JsonCurrentActivityRepository {
 }
 
 impl CurrentActivityRepository for JsonCurrentActivityRepository {
-    fn get_current_activity(&self) -> anyhow::Result<Option<ActiveActivity>> {
+    fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>> {
         if !Path::exists(&self.repository_path) {
             Ok(None)
         } else {
             let file = File::open(&self.repository_path)?;
-            let current_activity: ActiveActivity = serde_json::from_reader(file)?;
+            let current_activity: OngoingActivity = serde_json::from_reader(file)?;
             Ok(Some(current_activity))
         }
     }
 
-    fn set_current_activity(&mut self, activity: ActiveActivity) -> anyhow::Result<()> {
+    fn set_current_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<()> {
         if Path::exists(&self.repository_path) {
             fs::remove_file(&self.repository_path)?
         }

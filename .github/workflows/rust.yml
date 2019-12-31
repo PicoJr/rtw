@@ -13,3 +13,7 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Check formatting (cargo fmt)
+      run: cargo fmt -- --check
+    - name: Run linting check (clippy)
+      run: cargo clippy
