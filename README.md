@@ -17,11 +17,22 @@ Development occurs on `dev`, releases are made on `master` branch.
 
 ## Install
 
+Supported OS: Linux.
+
+### Cargo
+
 ```
 cargo install rtw
 ```
 
-Supported OS: Linux.
+### Build From Source
+
+Clone and build from source:
+```
+git clone https://github.com/PicoJr/rtw.git
+cd rtw
+cargo build --release
+```
 
 ## Changelog
 
