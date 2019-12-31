@@ -1,7 +1,11 @@
 [![rtw crate](https://img.shields.io/crates/v/rtw.svg)](https://crates.io/crates/rtw)
 [![rtw documentation](https://docs.rs/rtw/badge.svg)](https://docs.rs/rtw)
 [![GitHub license](https://img.shields.io/github/license/PicoJr/rtw)](https://github.com/PicoJr/rtw/blob/master/LICENSE)
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FPicoJr%2Frtw%2Fbadge&style=flat)](https://actions-badge.atrox.dev/PicoJr/rtw/goto)
+
+|Branch|Status|
+|------|------|
+|[master](https://github.com/PicoJr/rtw/tree/master)|![Build Status](https://github.com/PicoJr/rtw/workflows/Rust/badge.svg?branch=master)|
+|[dev](https://github.com/PicoJr/rtw/tree/dev)      |![Build Status](https://github.com/PicoJr/rtw/workflows/Rust/badge.svg?branch=dev)|
 
 # RTW - Rust Time Watcher
 
