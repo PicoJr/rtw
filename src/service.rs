@@ -74,145 +74,9 @@ mod tests {
     use crate::chrono_clock::ChronoClock;
     use crate::json_current::JsonCurrentActivityRepository;
     use crate::json_finished::JsonFinishedActivityRepository;
-    use crate::ram_current::RAMCurrentActivityRepository;
-    use crate::ram_finished::RAMFinishedActivityRepository;
     use crate::service::Service;
     use rtw::{ActivityService, Clock, DateTimeW, OngoingActivity};
     use tempfile::{tempdir, TempDir};
-
-    fn build_ram_service() -> Service<RAMFinishedActivityRepository, RAMCurrentActivityRepository> {
-        Service::new(
-            RAMFinishedActivityRepository::default(),
-            RAMCurrentActivityRepository::default(),
-        )
-    }
-
-    #[test]
-    fn test_ram_ram_no_activity() {
-        let service = build_ram_service();
-        assert!(service.get_current_activity().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_ram_ram_start_activity() {
-        let clock = ChronoClock {};
-        let mut service = build_ram_service();
-        assert!(service
-            .start_activity(OngoingActivity {
-                start_time: clock.get_time(),
-                tags: vec![String::from("a")],
-            })
-            .is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-    }
-
-    #[test]
-    fn test_ram_ram_stop_activity_with_active() {
-        let clock = ChronoClock {};
-        let mut service = build_ram_service();
-        assert!(service
-            .start_activity(OngoingActivity {
-                start_time: clock.get_time(),
-                tags: vec![String::from("a")],
-            })
-            .is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-        assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_ram_ram_start_stop_start() {
-        let clock = ChronoClock {};
-        let mut service = build_ram_service();
-        let start_0 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-        });
-        assert!(start_0.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-        let stop = service.stop_current_activity(clock.get_time());
-        assert!(stop.is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
-        let start_1 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("b")],
-        });
-        assert!(start_1.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-    }
-
-    fn build_ram_json_service(
-        test_dir: &TempDir,
-    ) -> Service<RAMFinishedActivityRepository, JsonCurrentActivityRepository> {
-        let repository_path = test_dir.path().join(".rtwr.json");
-        Service::new(
-            RAMFinishedActivityRepository::default(),
-            JsonCurrentActivityRepository::new(repository_path),
-        )
-    }
-
-    #[test]
-    fn test_ram_json_no_activity() {
-        let clock = ChronoClock {};
-        let test_dir = tempdir().expect("error while creating tempdir");
-        let mut service = build_ram_json_service(&test_dir);
-        assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_ram_json_start_activity() {
-        let clock = ChronoClock {};
-        let test_dir = tempdir().expect("error while creating tempdir");
-        let mut service = build_ram_json_service(&test_dir);
-        assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        let start = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-        });
-        start.unwrap();
-        let current = service.get_current_activity();
-        assert!(current.is_ok());
-        assert!(current.unwrap().is_some());
-    }
-
-    #[test]
-    fn test_ram_json_stop_activity_with_active() {
-        let clock = ChronoClock {};
-        let test_dir = tempdir().expect("error while creating tempdir");
-        let mut service = build_ram_json_service(&test_dir);
-        let start = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-        });
-        start.unwrap();
-        assert!(service.get_current_activity().unwrap().is_some());
-        assert!(service.stop_current_activity(clock.get_time()).is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
-    }
-
-    #[test]
-    fn test_ram_json_start_stop_start() {
-        let clock = ChronoClock {};
-        let test_dir = tempdir().expect("error while creating tempdir");
-        let mut service = build_ram_json_service(&test_dir);
-        let start_0 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-        });
-        assert!(start_0.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-        let stop = service.stop_current_activity(clock.get_time());
-        assert!(stop.is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
-        let start_1 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("b")],
-        });
-        assert!(start_1.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-    }
 
     fn build_json_service(
         test_dir: &TempDir,
@@ -226,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_no_activity() {
+    fn test_no_activity() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
@@ -235,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_start_activity() {
+    fn test_start_activity() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
@@ -251,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_stop_activity_with_active() {
+    fn test_stop_activity_with_active() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
@@ -266,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_start_stop_start() {
+    fn test_start_stop_start() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
@@ -288,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_summary_nothing() {
+    fn test_summary_nothing() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let service = build_json_service(&test_dir);
@@ -300,7 +164,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_summary_something() {
+    fn test_summary_something() {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
@@ -320,7 +184,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_json_summary_not_in_range() {
+    fn test_summary_not_in_range() {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         let today = chrono::Local::today();
