@@ -16,11 +16,6 @@ mod rtw_cli;
 mod service;
 mod time_tools;
 
-#[cfg(test)]
-mod ram_current;
-#[cfg(test)]
-mod ram_finished;
-
 fn main() -> anyhow::Result<()> {
     let c = cli_helper::ActivityCli {};
     let clock = ChronoClock {};
