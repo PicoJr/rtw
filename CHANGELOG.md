@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.1](https://crates.io/crates/rtw/0.2.1) Mar 8, 2020
+
+### Fixed
+
+* fix cargo-audit warning on `quote:1.0.2` being yanked
+
 ### Removed
 
 * ram-only implementations
