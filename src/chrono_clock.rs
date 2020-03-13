@@ -12,9 +12,6 @@ impl Clock for ChronoClock {
         match time {
             Time::Now => self.get_time(),
             Time::DateTime(abs_time) => abs_time,
-            Time::MinutesAgo(mins) => {
-                (chrono::Local::now() - chrono::Duration::minutes(mins as i64)).into()
-            }
         }
     }
 

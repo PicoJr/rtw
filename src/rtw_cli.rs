@@ -21,7 +21,7 @@ where
     }
 
     fn run_start(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m)?;
+        let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m, &self.clock)?;
         let abs_start_time = self.clock.date_time(start_time);
         let started = self
             .service
@@ -32,7 +32,7 @@ where
     }
 
     fn run_track(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (start_time, stop_time, tags) = cli_helper::ActivityCli::parse_track_args(sub_m)?;
+        let (start_time, stop_time, tags) = cli_helper::ActivityCli::parse_track_args(sub_m, &self.clock)?;
         let activity = OngoingActivity::new(self.clock.date_time(start_time), tags)
             .into_activity(self.clock.date_time(stop_time))?;
         let tracked = self.service.track_activity(activity)?;
@@ -44,7 +44,7 @@ where
     }
 
     fn run_stop(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m)?;
+        let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m, &self.clock)?;
         let abs_stop_time = self.clock.date_time(stop_time);
         let stopped_maybe = self.service.stop_current_activity(abs_stop_time)?;
         match stopped_maybe {

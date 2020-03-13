@@ -66,14 +66,14 @@ impl ActivityCli {
             )
     }
 
-    pub fn parse_start_args(start_m: &ArgMatches) -> anyhow::Result<(Time, Tags)> {
+    pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Tags)> {
         let time_arg = start_m.value_of("time");
         let tags_arg = start_m.values_of("tags");
         let mut tags_vec: Tags = vec![];
         let mut time = Time::Now;
         if let Some(time_str) = time_arg {
             if TimeTools::is_time(time_str) {
-                time = TimeTools::time_from_str(time_str)?
+                time = TimeTools::time_from_str(time_str, clock)?
             } else {
                 tags_vec.push(String::from(time_str))
             }
@@ -87,11 +87,11 @@ impl ActivityCli {
         Ok((time, tags_vec))
     }
 
-    pub fn parse_track_args(track_m: &ArgMatches) -> anyhow::Result<(Time, Time, Tags)> {
+    pub fn parse_track_args(track_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Time, Tags)> {
         let start_time_arg = track_m.value_of("start").expect("start time is required");
-        let start_time = TimeTools::time_from_str(start_time_arg)?;
+        let start_time = TimeTools::time_from_str(start_time_arg, clock)?;
         let stop_time_arg = track_m.value_of("stop").expect("stop time is required");
-        let stop_time = TimeTools::time_from_str(stop_time_arg)?;
+        let stop_time = TimeTools::time_from_str(stop_time_arg, clock)?;
         let tags = track_m
             .values_of("tags")
             .expect("at least one tag is required");
@@ -103,10 +103,10 @@ impl ActivityCli {
         Ok((start_time, stop_time, tags_vec))
     }
 
-    pub fn parse_stop_args(stop_m: &ArgMatches) -> anyhow::Result<Time> {
+    pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
         let time_arg = stop_m.value_of("time");
         if let Some(time_str) = time_arg {
-            TimeTools::time_from_str(time_str)
+            TimeTools::time_from_str(time_str, clock)
         } else {
             Ok(Time::Now)
         }
