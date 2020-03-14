@@ -44,7 +44,7 @@ Started  2019-12-25T19:43:00
 
 Example:
 ```
-rtw start 4m write doc
+rtw start 4 min ago write doc
 ```
 
 Example output:
@@ -87,7 +87,7 @@ Total   00:07:00
 
 Example:
 ```
-rtw stop 4m
+rtw stop 4m ago
 ```
 
 Example output:

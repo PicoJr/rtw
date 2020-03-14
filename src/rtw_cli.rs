@@ -32,7 +32,8 @@ where
     }
 
     fn run_track(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (start_time, stop_time, tags) = cli_helper::ActivityCli::parse_track_args(sub_m, &self.clock)?;
+        let (start_time, stop_time, tags) =
+            cli_helper::ActivityCli::parse_track_args(sub_m, &self.clock)?;
         let activity = OngoingActivity::new(self.clock.date_time(start_time), tags)
             .into_activity(self.clock.date_time(stop_time))?;
         let tracked = self.service.track_activity(activity)?;

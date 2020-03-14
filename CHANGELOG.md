@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.0.0 (Unreleased)
+
+## Added
+
+* crate [chrono-english](https://docs.rs/chrono-english/) for time parsing.
+* more unit and integration tests
+
+### Breaking API Changes
+
+`rtw` now uses the crate [chrono-english](https://docs.rs/chrono-english/) for time parsing.
+
+As a result `rtw` now support the following [formats](https://docs.rs/chrono-english/#supported-formats) when supplying time hints.
+
+The following syntax are not supported anymore:
+
+* `rtw start 4m foo`, use `rtw start 4m ago foo` instead.
+* `rtw stop 4m`, use `rtw stop 4m ago` instead.
 
 ## [0.2.1](https://crates.io/crates/rtw/0.2.1) Mar 8, 2020
 
