@@ -66,9 +66,9 @@ impl fmt::Display for DurationW {
         write!(
             f,
             "{:02}:{:02}:{:02}",
-            self.0.num_hours(),
-            self.0.num_minutes(),
-            self.0.num_seconds()
+            self.0.num_seconds() / 3600,
+            (self.0.num_seconds() / 60) % 60,
+            (self.0.num_seconds() % 60)
         )
     }
 }

@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn track_date() {
+    fn track_date_missing_seperator() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
         let mut cmd = Command::cargo_bin("rtw").unwrap();
@@ -141,7 +141,68 @@ mod tests {
             .arg("2019-12-25T19:45:00")
             .arg("foo")
             .assert()
+            .failure();
+    }
+
+    #[test]
+    fn track_date() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("2019-12-25T19:43:00")
+            .arg("-")
+            .arg("2019-12-25T19:45:00")
+            .arg("foo")
+            .assert()
             .success();
+    }
+
+    #[test]
+    fn track_relative() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("10 min ago")
+            .arg("-")
+            .arg("5 min ago")
+            .arg("foo")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn track_relative_missing_end() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("10 min ago")
+            .arg("-")
+            .arg("foo")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn track_relative_missing_start_and_end() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("-")
+            .arg("foo")
+            .assert()
+            .failure();
     }
 
     #[test]

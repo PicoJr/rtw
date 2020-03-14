@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
-* crate [chrono-english](https://docs.rs/chrono-english/) for time parsing.
+* crate [chrono-english](https://docs.rs/chrono-english/) for time parsing see [commands](commands.md).
 * more unit and integration tests
+
+## Fixed
+
+* Duration display bug: 1h was displayed as `01:60:3600` instead of `01:00:00`
 
 ### Breaking API Changes
 
@@ -22,6 +26,7 @@ The following syntax are not supported anymore:
 
 * `rtw start 4m foo`, use `rtw start 4m ago foo` instead.
 * `rtw stop 4m`, use `rtw stop 4m ago` instead.
+* `rtw track 2019-12-25T19:43:00 2019-12-25T19:45:00 write doc`, use `rtw track 2019-12-25T19:43:00 - 2019-12-25T19:45:00 write doc` instead
 
 ## [0.2.1](https://crates.io/crates/rtw/0.2.1) Mar 8, 2020
 

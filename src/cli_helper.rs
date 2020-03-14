@@ -1,21 +1,44 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::time_tools::TimeTools;
-use rtw::{ActivityId, Clock, DateTimeW, Tag, Tags, Time};
+use rtw::{ActivityId, Clock, DateTimeW, Tags, Time};
 use std::str::FromStr;
 
 pub struct ActivityCli {}
 
-fn split_time_clue_from_tags(tags: &[Tag], clock: &dyn Clock) -> (Time, Tags) {
-    for at in (0..=tags.len()).rev() {
-        let (possibly_time_clue, possibly_tags) = tags.split_at(at);
+fn split_time_clue_from_tags(tokens: &[String], clock: &dyn Clock) -> (Time, Tags) {
+    for at in (0..=tokens.len()).rev() {
+        let (possibly_time_clue, possibly_tags) = tokens.split_at(at);
         let possibly_time_clue_joined: &str = &possibly_time_clue.join(" ");
         if TimeTools::is_time(possibly_time_clue_joined) {
             let time = TimeTools::time_from_str(possibly_time_clue_joined, clock).unwrap();
             return (time, possibly_tags.to_vec());
         }
     }
-    (Time::Now, tags.to_vec())
+    (Time::Now, tokens.to_vec())
+}
+
+// "09:00 - 10:00 foo" -> ((09:00, 10:00), foo)
+fn split_time_range_from_tags(
+    tokens: &[String],
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Time, Tags)> {
+    let separator = "-";
+    let sp = tokens.splitn(2, |e| e == separator);
+    let sp: Vec<&[String]> = sp.collect();
+    match sp.as_slice() {
+        [range_start, range_end_and_tags] => {
+            let range_start_maybe = TimeTools::time_from_str(&range_start.join(" "), clock);
+            let (range_end, activity_tags) = split_time_clue_from_tags(&range_end_and_tags, clock);
+            match range_start_maybe {
+                Ok(range_start) => Ok((range_start, range_end, activity_tags)),
+                Err(e) => Err(anyhow::anyhow!(e)),
+            }
+        }
+        _ => Err(anyhow::anyhow!(
+            "missing ' - ' between range start and range end? "
+        )),
+    }
 }
 
 impl ActivityCli {
@@ -37,7 +60,7 @@ impl ActivityCli {
                 SubCommand::with_name("start")
                     .about("Start new activity")
                     .arg(
-                        Arg::with_name("tags")
+                        Arg::with_name("tokens")
                             .multiple(true)
                             .required(true)
                             .help(concat!(
@@ -49,9 +72,16 @@ impl ActivityCli {
             .subcommand(
                 SubCommand::with_name("track")
                     .about("Track a finished activity")
-                    .arg(Arg::with_name("start").required(true).help("time"))
-                    .arg(Arg::with_name("stop").required(true).help("time"))
-                    .arg(Arg::with_name("tags").multiple(true).help("tags")),
+                    .arg(
+                        Arg::with_name("tokens")
+                            .multiple(true)
+                            .required(true)
+                            .help(concat!(
+                                "interval time clue followed by at least 1 tag\n",
+                                "start - end tags...\n",
+                                "e.g '09:00 - 10:00 foo' "
+                            )),
+                    ),
             )
             .subcommand(
                 SubCommand::with_name("stop").about("Stop activity").arg(
@@ -95,7 +125,7 @@ impl ActivityCli {
         start_m: &ArgMatches,
         clock: &dyn Clock,
     ) -> anyhow::Result<(Time, Tags)> {
-        let values_arg = start_m.values_of("tags"); // optional time clue, tags
+        let values_arg = start_m.values_of("tokens"); // optional time clue, tags
         if let Some(values) = values_arg {
             let values: Tags = values.map(String::from).collect();
             let (time, tags) = split_time_clue_from_tags(&values, clock);
@@ -112,19 +142,11 @@ impl ActivityCli {
         track_m: &ArgMatches,
         clock: &dyn Clock,
     ) -> anyhow::Result<(Time, Time, Tags)> {
-        let start_time_arg = track_m.value_of("start").expect("start time is required");
-        let start_time = TimeTools::time_from_str(start_time_arg, clock)?;
-        let stop_time_arg = track_m.value_of("stop").expect("stop time is required");
-        let stop_time = TimeTools::time_from_str(stop_time_arg, clock)?;
-        let tags = track_m
-            .values_of("tags")
-            .expect("at least one tag is required");
-        let tags = tags.map(String::from);
-        let mut tags_vec: Tags = vec![];
-        for tag in tags {
-            tags_vec.push(tag);
-        }
-        Ok((start_time, stop_time, tags_vec))
+        let values_arg = track_m
+            .values_of("tokens")
+            .expect("start time, end time and at least 1 tag required");
+        let values: Tags = values_arg.map(String::from).collect();
+        split_time_range_from_tags(&values, clock)
     }
 
     pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
@@ -167,7 +189,7 @@ impl ActivityCli {
 #[cfg(test)]
 mod tests {
     use crate::chrono_clock::ChronoClock;
-    use crate::cli_helper::split_time_clue_from_tags;
+    use crate::cli_helper::{split_time_clue_from_tags, split_time_range_from_tags};
     use rtw::{Tags, Time};
 
     #[test]
@@ -223,5 +245,19 @@ mod tests {
         let (time, tags) = split_time_clue_from_tags(&values, &clock);
         assert_ne!(Time::Now, time);
         assert_eq!(tags, vec![String::from("foo")]);
+    }
+
+    #[test]
+    // rtw track 09:00 - 10:00 foo
+    fn test_split_time_range_from_tags_1_1_1() {
+        let clock = ChronoClock {};
+        let values: Tags = vec![
+            String::from("09:00"),
+            String::from("-"),
+            String::from("10:00"),
+            String::from("foo"),
+        ];
+        let time_range_and_tags = split_time_range_from_tags(&values, &clock);
+        assert!(time_range_and_tags.is_ok());
     }
 }
