@@ -18,7 +18,6 @@ use std::fmt;
 ///
 /// e.g. 2019-12-25T18:43:00
 pub const DATETIME_FMT: &str = "%Y-%m-%dT%H:%M:%S";
-pub const RELATIVE_TIME_REGEX: &str = r"(\d+)m";
 
 /// `Tag` = `String`
 pub type Tag = String;
@@ -33,10 +32,15 @@ pub type ActivityId = usize;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct DateTimeW(DateTime<Local>);
 
-/// Convert from `DateTime<Local>` to `DateTimeW`
-impl Into<DateTimeW> for DateTime<Local> {
-    fn into(self) -> DateTimeW {
-        DateTimeW(self)
+impl From<DateTime<Local>> for DateTimeW {
+    fn from(dt: DateTime<Local>) -> Self {
+        DateTimeW(dt)
+    }
+}
+
+impl Into<DateTime<Local>> for DateTimeW {
+    fn into(self) -> DateTime<Local> {
+        self.0
     }
 }
 
@@ -62,9 +66,9 @@ impl fmt::Display for DurationW {
         write!(
             f,
             "{:02}:{:02}:{:02}",
-            self.0.num_hours(),
-            self.0.num_minutes(),
-            self.0.num_seconds()
+            self.0.num_seconds() / 3600,
+            (self.0.num_seconds() / 60) % 60,
+            (self.0.num_seconds() % 60)
         )
     }
 }
@@ -74,8 +78,6 @@ impl fmt::Display for DurationW {
 pub enum Time {
     /// Now, can be converted to `DateTimeW` using `Clock.date_time`
     Now,
-    /// MinutesAgo, can be converted to `DateTimeW` using `Clock.date_time`
-    MinutesAgo(usize),
     DateTime(DateTimeW),
 }
 

@@ -11,7 +11,7 @@
 
 Command-line interface (CLI) time tracker.
 
-This project is for educational purpose only. It is a _partial_ Rust implementation of [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
+This project is heavily inspired from [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
 
 > For a stable feature-rich CLI time tracker, please use Timewarrior: https://timewarrior.net/.
 
@@ -21,7 +21,7 @@ Development occurs on `dev`, releases are made on `master` branch.
 
 ## Install
 
-Supported OS: Linux.
+Supported OS: Linux. (it has not been tested on Windows)
 
 ### Cargo
 
@@ -30,6 +30,8 @@ cargo install rtw
 ```
 
 ### Build From Source
+
+rtw compiles with Rust 1.39.0 (stable) or newer.
 
 Clone and build from source:
 ```

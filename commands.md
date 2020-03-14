@@ -21,6 +21,7 @@
          * [Delete Activity with id](#delete-activity-with-id)
       * [Track a finished activity](#track-a-finished-activity)
          * [Track a finished activity with dates](#track-a-finished-activity-with-dates)
+         * [Track a finished activity the same day](#track-a-finished-activity-the-same-day)
 
 <!--te-->
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -44,7 +45,7 @@ Started  2019-12-25T19:43:00
 
 Example:
 ```
-rtw start 4m write doc
+rtw start 4 min ago write doc
 ```
 
 Example output:
@@ -87,7 +88,7 @@ Total   00:07:00
 
 Example:
 ```
-rtw stop 4m
+rtw stop 4m ago
 ```
 
 Example output:
@@ -205,8 +206,10 @@ Total   00:02:00
 
 Example:
 ```
-rtw track  2019-12-25T19:43:00 2019-12-25T19:45:00 write doc
+rtw track 2019-12-25T19:43:00 - 2019-12-25T19:45:00 write doc
 ```
+
+> please note the `-` separator
 
 Example output
 ```
@@ -214,4 +217,21 @@ Recorded write doc
 Started 2019-12-25T19:43:00
 Ended   2019-12-25T19:45:00
 Total   00:02:00
+```
+
+### Track a finished activity the same day
+
+Example:
+```
+rtw track 09:00 - 10:00 write doc
+```
+
+> please note the `-` separator
+
+Example output
+```
+Recorded write doc
+Started 2020-03-14T09:00:00
+Ended   2020-03-14T10:00:00
+Total   01:00:00
 ```
