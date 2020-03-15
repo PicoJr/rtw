@@ -40,6 +40,10 @@ cd rtw
 cargo build --release
 ```
 
+### From binaries (Linux)
+
+Download the corresponding archive from the [Release page](https://github.com/picojr/rtw/releases).
+
 ## Changelog
 
 Please see the [CHANGELOG](CHANGELOG.md) for a release history.
@@ -109,7 +113,7 @@ Default location is the home (`~`) directory.
 
 ```
 ~/.rtw.json  # stores current activity
-~/.rtwh.json # stores finished activity
+~/.rtwh.json # stores finished activities
 ```
 
 **there is currently no file locking mechanism**: running several `rtw` commands at the same time
