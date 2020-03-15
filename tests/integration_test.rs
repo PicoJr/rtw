@@ -6,7 +6,7 @@ mod tests {
     use tempfile::tempdir;
 
     const NO_ACTIVE_TIME_TRACKING: &str = "There is no active time tracking.\n";
-    const NO_FILTERED_DATA_FOUND: &str ="No filtered data found.\n";
+    const NO_FILTERED_DATA_FOUND: &str = "No filtered data found.\n";
 
     #[test]
     fn no_args() {
