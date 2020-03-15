@@ -20,6 +20,14 @@ impl Clock for ChronoClock {
         self.day_range(today)
     }
 
+    fn this_week_range(&self) -> (DateTimeW, DateTimeW) {
+        let today = chrono::Local::today();
+        let weekday = today.weekday();
+        let this_week_monday = today - Duration::days(weekday.num_days_from_monday() as i64);
+        let this_week_sunday = this_week_monday + Duration::days(6);
+        self.days_range(this_week_monday, this_week_sunday)
+    }
+
     fn yesterday_range(&self) -> (DateTimeW, DateTimeW) {
         let today = chrono::Local::today();
         let yesterday = today - chrono::Duration::days(1); // so proud

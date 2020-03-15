@@ -108,6 +108,11 @@ impl ActivityCli {
                             .help("activities done last week"),
                     )
                     .arg(
+                        Arg::with_name("week")
+                            .long("week")
+                            .help("activities done this week"),
+                    )
+                    .arg(
                         Arg::with_name("id")
                             .long("id")
                             .help("display activities id"),
@@ -165,13 +170,18 @@ impl ActivityCli {
         clock: &dyn Clock,
     ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
         let display_id = summary_m.is_present("id");
-        if summary_m.is_present("yesterday") {
-            return Ok((clock.yesterday_range(), display_id));
-        }
-        if summary_m.is_present("lastweek") {
-            return Ok((clock.last_week_range(), display_id));
-        }
-        Ok((clock.today_range(), display_id))
+        let range = {
+            if summary_m.is_present("yesterday") {
+                clock.yesterday_range()
+            } else if summary_m.is_present("lastweek") {
+                clock.last_week_range()
+            } else if summary_m.is_present("week") {
+                clock.this_week_range()
+            } else {
+                clock.today_range()
+            }
+        };
+        Ok((range, display_id))
     }
 
     pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {

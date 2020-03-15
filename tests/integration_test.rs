@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn track_date_missing_seperator() {
+    fn track_date_missing_separator() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
         let mut cmd = Command::cargo_bin("rtw").unwrap();
