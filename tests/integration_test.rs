@@ -5,6 +5,9 @@ mod tests {
     use assert_cmd::Command;
     use tempfile::tempdir;
 
+    const NO_ACTIVE_TIME_TRACKING: &str = "There is no active time tracking.\n";
+    const NO_FILTERED_DATA_FOUND: &str ="No filtered data found.\n";
+
     #[test]
     fn no_args() {
         let test_dir = tempdir().expect("could not create temp directory");
@@ -14,7 +17,7 @@ mod tests {
             .arg(test_dir_path)
             .assert()
             .success()
-            .stdout("There is no active time tracking.\n");
+            .stdout(NO_ACTIVE_TIME_TRACKING);
     }
 
     #[test]
@@ -27,7 +30,7 @@ mod tests {
             .arg("summary")
             .assert()
             .success()
-            .stdout("No filtered data found.\n");
+            .stdout(NO_FILTERED_DATA_FOUND);
     }
 
     #[test]
@@ -41,7 +44,7 @@ mod tests {
             .arg("--id")
             .assert()
             .success()
-            .stdout("No filtered data found.\n");
+            .stdout(NO_FILTERED_DATA_FOUND);
     }
 
     #[test]
@@ -283,7 +286,8 @@ mod tests {
             .arg(test_dir_path)
             .arg("stop")
             .assert()
-            .success();
+            .success()
+            .stdout(NO_ACTIVE_TIME_TRACKING);
     }
 
     #[test]
