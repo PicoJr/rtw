@@ -48,6 +48,47 @@ mod tests {
     }
 
     #[test]
+    fn summary_none_with_range() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("summary")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .assert()
+            .success()
+            .stdout(NO_FILTERED_DATA_FOUND);
+    }
+
+    #[test]
+    fn summary_something_with_range() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("summary")
+            .arg("08:00")
+            .arg("-")
+            .arg("11:00")
+            .assert()
+            .success();
+    }
+
+    #[test]
     fn continue_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -174,6 +215,22 @@ mod tests {
             .arg("10 min ago")
             .arg("-")
             .arg("5 min ago")
+            .arg("foo")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn track_relative_time() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
             .arg("foo")
             .assert()
             .success();
