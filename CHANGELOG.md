@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * crate [chrono-english](https://docs.rs/chrono-english/) for time parsing see [commands](commands.md).
 * more unit and integration tests
+* `summary --week` option
+* `summary range_start - range_end` syntax
 
 ## Fixed
 

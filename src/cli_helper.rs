@@ -6,6 +6,9 @@ use std::str::FromStr;
 
 pub struct ActivityCli {}
 
+// 09:00 foo -> (09:00, foo)
+// foo -> (Now, foo)
+// last friday 8pm foo -> (last friday 8pm, foo)
 fn split_time_clue_from_tags(tokens: &[String], clock: &dyn Clock) -> (Time, Tags) {
     for at in (0..=tokens.len()).rev() {
         let (possibly_time_clue, possibly_tags) = tokens.split_at(at);
@@ -18,7 +21,7 @@ fn split_time_clue_from_tags(tokens: &[String], clock: &dyn Clock) -> (Time, Tag
     (Time::Now, tokens.to_vec())
 }
 
-// "09:00 - 10:00 foo" -> ((09:00, 10:00), foo)
+// "09:00 - 10:00 foo" -> (09:00, 10:00, foo)
 fn split_time_range_from_tags(
     tokens: &[String],
     clock: &dyn Clock,
@@ -33,6 +36,31 @@ fn split_time_range_from_tags(
             match range_start_maybe {
                 Ok(range_start) => Ok((range_start, range_end, activity_tags)),
                 Err(e) => Err(anyhow::anyhow!(e)),
+            }
+        }
+        _ => Err(anyhow::anyhow!(
+            "missing ' - ' between range start and range end? "
+        )),
+    }
+}
+
+// 09:00 - 10:00 -> (09:00, 10:00)
+// 09:00 - -> (09:00, Now)
+fn split_time_range(tokens: &[String], clock: &dyn Clock) -> anyhow::Result<(Time, Time)> {
+    let separator = "-";
+    let sp = tokens.splitn(2, |e| e == separator);
+    let sp: Vec<&[String]> = sp.collect();
+    match sp.as_slice() {
+        [range_start, range_end] => {
+            let range_start_maybe = TimeTools::time_from_str(&range_start.join(" "), clock);
+            let range_end_maybe = if range_end.is_empty() {
+                Ok(Time::Now)
+            } else {
+                TimeTools::time_from_str(&range_end.join(" "), clock)
+            };
+            match (range_start_maybe, range_end_maybe) {
+                (Ok(range_start), Ok(range_end)) => Ok((range_start, range_end)),
+                _ => Err(anyhow::anyhow!("invalid range")),
             }
         }
         _ => Err(anyhow::anyhow!(
@@ -98,6 +126,17 @@ impl ActivityCli {
                 SubCommand::with_name("summary")
                     .about("Display finished activities")
                     .arg(
+                        Arg::with_name("tokens")
+                            .multiple(true)
+                            .required(false)
+                            .conflicts_with_all(&["yesterday", "lastweek", "week"])
+                            .help(concat!(
+                                "optional interval time clue\n",
+                                "start - end\n",
+                                "e.g '09:00 - 10:00' "
+                            )),
+                    )
+                    .arg(
                         Arg::with_name("yesterday")
                             .long("yesterday")
                             .help("activities done yesterday"),
@@ -106,6 +145,11 @@ impl ActivityCli {
                         Arg::with_name("lastweek")
                             .long("lastweek")
                             .help("activities done last week"),
+                    )
+                    .arg(
+                        Arg::with_name("week")
+                            .long("week")
+                            .help("activities done this week"),
                     )
                     .arg(
                         Arg::with_name("id")
@@ -165,13 +209,31 @@ impl ActivityCli {
         clock: &dyn Clock,
     ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
         let display_id = summary_m.is_present("id");
-        if summary_m.is_present("yesterday") {
-            return Ok((clock.yesterday_range(), display_id));
+        let values_arg = summary_m.values_of("tokens");
+        if let Some(values) = values_arg {
+            let values: Vec<String> = values.map(String::from).collect();
+            let range_maybe = split_time_range(&values, clock);
+            return match range_maybe {
+                Ok((range_start, range_end)) => {
+                    let range_start = clock.date_time(range_start);
+                    let range_end = clock.date_time(range_end);
+                    Ok(((range_start, range_end), display_id))
+                }
+                Err(e) => Err(anyhow::anyhow!(e)),
+            };
         }
-        if summary_m.is_present("lastweek") {
-            return Ok((clock.last_week_range(), display_id));
-        }
-        Ok((clock.today_range(), display_id))
+        let range = {
+            if summary_m.is_present("yesterday") {
+                clock.yesterday_range()
+            } else if summary_m.is_present("lastweek") {
+                clock.last_week_range()
+            } else if summary_m.is_present("week") {
+                clock.this_week_range()
+            } else {
+                clock.today_range()
+            }
+        };
+        Ok((range, display_id))
     }
 
     pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
@@ -189,7 +251,10 @@ impl ActivityCli {
 #[cfg(test)]
 mod tests {
     use crate::chrono_clock::ChronoClock;
-    use crate::cli_helper::{split_time_clue_from_tags, split_time_range_from_tags};
+    use crate::cli_helper::{
+        split_time_clue_from_tags, split_time_range, split_time_range_from_tags,
+    };
+    use crate::time_tools::TimeTools;
     use rtw::{Tags, Time};
 
     #[test]
@@ -236,13 +301,13 @@ mod tests {
     // rtw start 1 h ago foo
     fn test_split_time_clue_from_tags_3_1() {
         let clock = ChronoClock {};
-        let values: Tags = vec![
+        let tokens: Vec<String> = vec![
             String::from("1"),
             String::from("h"),
             String::from("ago"),
             String::from("foo"),
         ];
-        let (time, tags) = split_time_clue_from_tags(&values, &clock);
+        let (time, tags) = split_time_clue_from_tags(&tokens, &clock);
         assert_ne!(Time::Now, time);
         assert_eq!(tags, vec![String::from("foo")]);
     }
@@ -251,13 +316,45 @@ mod tests {
     // rtw track 09:00 - 10:00 foo
     fn test_split_time_range_from_tags_1_1_1() {
         let clock = ChronoClock {};
-        let values: Tags = vec![
+        let tokens: Vec<String> = vec![
             String::from("09:00"),
             String::from("-"),
             String::from("10:00"),
             String::from("foo"),
         ];
-        let time_range_and_tags = split_time_range_from_tags(&values, &clock);
+        let time_range_and_tags = split_time_range_from_tags(&tokens, &clock);
         assert!(time_range_and_tags.is_ok());
+    }
+
+    #[test]
+    // rtw summary 09:00 - 10:00
+    fn test_split_range_1_1() {
+        let clock = ChronoClock {};
+        let tokens: Vec<String> = vec![
+            String::from("09:00"),
+            String::from("-"),
+            String::from("10:00"),
+        ];
+        let time_range = split_time_range(&tokens, &clock);
+        assert!(time_range.is_ok());
+        let time_range = time_range.unwrap();
+        assert_eq!(
+            time_range.0,
+            TimeTools::time_from_str("09:00", &clock).unwrap()
+        );
+        assert_eq!(
+            time_range.1,
+            TimeTools::time_from_str("10:00", &clock).unwrap()
+        );
+    }
+
+    #[test]
+    // rtw summary 09:00 -
+    fn test_split_range_1_0() {
+        let clock = ChronoClock {};
+        let tokens: Vec<String> = vec![String::from("09:00"), String::from("-")];
+        let time_range = split_time_range(&tokens, &clock);
+        assert!(time_range.is_ok());
+        assert_eq!(time_range.unwrap().1, Time::Now)
     }
 }

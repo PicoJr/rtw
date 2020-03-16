@@ -14,6 +14,7 @@
          * [Display finished activities summary for today](#display-finished-activities-summary-for-today)
          * [Display finished activities summary for yesterday](#display-finished-activities-summary-for-yesterday)
          * [Display finished activities summary for last week](#display-finished-activities-summary-for-last-week)
+         * [Display finished activities summary for range](#display-finished-activities-summary-for-range)
          * [Display finished activities id](#display-finished-activities-id)
       * [Continue Activity](#continue-activity)
          * [Continue last finished activity](#continue-last-finished-activity)
@@ -145,6 +146,18 @@ write doc    2019-12-24T19:43:00 2019-12-24T19:45:00 00:03:000
 Example:
 ```
 rtw summary --lastweek
+```
+
+Example output:
+```
+write doc    2019-12-17T19:43:00 2019-12-17T19:45:00 00:03:000
+```
+
+### Display finished activities summary for range
+
+Example:
+```
+rtw summary 19:00 - 20:00
 ```
 
 Example output:

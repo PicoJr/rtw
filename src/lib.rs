@@ -106,6 +106,13 @@ pub trait Clock {
     ///
     /// last week: monday: 00:00:00 - sunday: 23:59:59
     fn last_week_range(&self) -> (DateTimeW, DateTimeW);
+
+    /// Get time range for this week
+    ///
+    /// this week (ISO 8601, week start on monday)
+    ///
+    /// this week: monday: 00:00:00 - sunday: 23:59:59
+    fn this_week_range(&self) -> (DateTimeW, DateTimeW);
 }
 
 /// A finished activity (with a stop time)
