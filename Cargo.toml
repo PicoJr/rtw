@@ -24,3 +24,4 @@ chrono-english = "0.1.4"
 [dev-dependencies]
 tempfile = "3"
 assert_cmd = "0.12"
+predicates = "1.0.4"

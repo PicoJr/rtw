@@ -116,6 +116,31 @@ mod tests {
     }
 
     #[test]
+    fn delete_some() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("delete")
+            .arg("0")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Deleted foo"));
+    }
+
+    #[test]
     fn start_now() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -138,13 +163,15 @@ mod tests {
             .arg("start")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
             .arg("stop")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 
     #[test]
@@ -157,20 +184,23 @@ mod tests {
             .arg("start")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
             .arg("stop")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
             .arg("delete")
             .arg("0")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Deleted foo"));
     }
 
     #[test]
@@ -201,7 +231,8 @@ mod tests {
             .arg("2019-12-25T19:45:00")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 
     #[test]
@@ -217,7 +248,8 @@ mod tests {
             .arg("5 min ago")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 
     #[test]
@@ -233,7 +265,8 @@ mod tests {
             .arg("10:00")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 
     #[test]
@@ -248,7 +281,8 @@ mod tests {
             .arg("-")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 
     #[test]
@@ -303,7 +337,8 @@ mod tests {
             .arg("ago")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
     }
 
     #[test]
@@ -317,7 +352,8 @@ mod tests {
             .arg("09:00")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
     }
 
     #[test]
@@ -331,7 +367,8 @@ mod tests {
             .arg("2019-12-24T19:43:00")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
     }
 
     #[test]
@@ -360,7 +397,8 @@ mod tests {
             .arg("ago")
             .arg("foo")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
@@ -369,6 +407,7 @@ mod tests {
             .arg("min")
             .arg("ago")
             .assert()
-            .success();
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
     }
 }
