@@ -105,6 +105,17 @@ eat cookies  2019-12-25T12:08:49 2019-12-25T12:12:14 00:03:204
 
 For further details see [Full Usage](commands.md).
 
+## Configuration
+
+RTW doesn't create the config file for you, but it looks for one in the following locations (in this order):
+
+1. `$XDG_CONFIG_HOME/rtw/rtw_config.json`
+2. `$HOME/.config/rtw/rtw_config.json`
+3. `$XDG_CONFIG_HOME/.config/rtw_config.json`
+4. `$HOME/.config/rtw_config.json`
+
+see `example` folder for a default config file.
+
 ## Implementation
 
 RTW relies on json files for persistence.

@@ -1,8 +1,6 @@
 //! Command-line interface (CLI) time tracker.
 //!
-//! This project is for educational purpose only.
-//!
-//! It is a _partial_ Rust implementation of [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
+//! This project is heavily inspired from [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
 //!
 //! For a stable feature-rich CLI time tracker, please use Timewarrior: <https://timewarrior.net/>.
 

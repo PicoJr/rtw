@@ -13,16 +13,18 @@ mod cli_helper;
 mod json_current;
 mod json_finished;
 mod rtw_cli;
+mod rtw_config;
 mod service;
 mod time_tools;
 
 fn main() -> anyhow::Result<()> {
-    let c = cli_helper::ActivityCli {};
+    let cli_helper = cli_helper::ActivityCli {};
+    let config = rtw_config::load_config()?;
     let clock = ChronoClock {};
-    let app = c.get_app();
+    let app = cli_helper.get_app();
     let matches = app.get_matches();
     let storage_dir = match matches.value_of("directory") {
-        None => dirs::home_dir().expect("could not find home dir"),
+        None => config.storage_dir_path,
         Some(dir_str) => PathBuf::from_str(dir_str).expect("invalid directory"),
     };
     let current_activity_path = storage_dir.join(".rtw.json");

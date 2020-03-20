@@ -20,6 +20,7 @@ serde_json = "1.0"
 dirs = "2.0"
 chrono = { version = "0.4", features = ["serde"] }
 chrono-english = "0.1.4"
+config = "0.10.1"
 
 [dev-dependencies]
 tempfile = "3"
