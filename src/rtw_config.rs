@@ -3,6 +3,7 @@ extern crate config;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct RTWConfig {
     pub storage_dir_path: PathBuf,
 }
@@ -16,27 +17,80 @@ impl RTWConfig {
     }
 }
 
-pub fn load_config() -> anyhow::Result<RTWConfig> {
-    let default_config = RTWConfig::default();
+fn load_config_from_config_dir(
+    config_dir: &PathBuf,
+    default_config: RTWConfig,
+) -> anyhow::Result<RTWConfig> {
     let mut settings = config::Config::default();
+    let config_path = config_dir.join("rtw").join("rtw_config.json");
+    let config_path_fallback = config_dir.join("rtw_config.json");
+    let settings = settings
+        .set_default(
+            "storage_dir_path",
+            default_config.storage_dir_path.to_str().unwrap(),
+        )?
+        .merge(config::File::with_name(config_path.to_str().unwrap()).required(false))?
+        .merge(config::File::with_name(config_path_fallback.to_str().unwrap()).required(false))?;
+    let storage_dir_path = settings.get_str("storage_dir_path")?;
+    Ok(RTWConfig {
+        storage_dir_path: PathBuf::from_str(storage_dir_path.as_str())?,
+    })
+}
+
+pub fn load_config() -> anyhow::Result<RTWConfig> {
     match dirs::config_dir() {
-        Some(config_dir) => {
-            let config_path = config_dir.join("rtw").join("rtw_config.json");
-            let config_path_fallback = config_dir.join("rtw_config.json");
-            let settings = settings
-                .set_default(
-                    "storage_dir_path",
-                    default_config.storage_dir_path.to_str().unwrap(),
-                )?
-                .merge(config::File::with_name(config_path.to_str().unwrap()).required(false))?
-                .merge(
-                    config::File::with_name(config_path_fallback.to_str().unwrap()).required(false),
-                )?;
-            let storage_dir_path = settings.get_str("storage_dir_path")?;
-            Ok(RTWConfig {
-                storage_dir_path: PathBuf::from_str(storage_dir_path.as_str())?,
-            })
-        }
-        None => Ok(default_config),
+        None => Ok(RTWConfig::default()),
+        Some(config_dir) => load_config_from_config_dir(&config_dir, RTWConfig::default()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::rtw_config::{load_config_from_config_dir, RTWConfig};
+    use std::fs;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::PathBuf;
+    use std::str::FromStr;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_config_not_found_in_config_dir() {
+        let test_config_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_config_dir.path().to_path_buf();
+        let config = load_config_from_config_dir(&test_dir_path, RTWConfig::default());
+        assert_eq!(config.unwrap(), RTWConfig::default())
+    }
+
+    #[test]
+    // .config/rtw_config.json
+    fn test_config_found_in_config_dir() -> anyhow::Result<()> {
+        let expected = PathBuf::from_str("/expected").unwrap();
+        let test_config_dir = tempdir().expect("could not create temp directory");
+        let mut tmp_config = File::create(test_config_dir.path().join("rtw_config.json"))?;
+        writeln!(tmp_config, "{{\n\"storage_dir_path\": \"/expected\"\n}}")?;
+        let config = load_config_from_config_dir(
+            &test_config_dir.path().to_path_buf(),
+            RTWConfig::default(),
+        );
+        assert_eq!(config.unwrap().storage_dir_path, expected);
+        Ok(())
+    }
+
+    #[test]
+    // .config/rtw/rtw_config.json
+    fn test_config_found_in_sub_config_dir() -> anyhow::Result<()> {
+        let expected = PathBuf::from_str("/expected").unwrap();
+        let test_config_dir = tempdir().expect("could not create temp directory");
+        let test_config_sub_dir = test_config_dir.path().join("rtw");
+        fs::create_dir(test_config_sub_dir.clone()).expect("could not create temp/rtw directory");
+        let mut tmp_config = File::create(test_config_sub_dir.join("rtw_config.json"))?;
+        writeln!(tmp_config, "{{\n\"storage_dir_path\": \"/expected\"\n}}")?;
+        let config = load_config_from_config_dir(
+            &test_config_dir.path().to_path_buf(),
+            RTWConfig::default(),
+        );
+        assert_eq!(config.unwrap().storage_dir_path, expected);
+        Ok(())
     }
 }
