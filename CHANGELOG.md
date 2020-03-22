@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * add config using [config-rs](https://docs.rs/crate/config/0.10.1).
 
+### Changed
+
+* activities title are no longer truncated in summary
+
 ### Github CI
 
 * Add platforms: `macos-latest`, `windows-latest` (see [rust.yml](.github/workflows/rust.yml)).
