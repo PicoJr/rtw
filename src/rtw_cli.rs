@@ -63,21 +63,26 @@ where
     fn run_summary(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
         let ((range_start, range_end), display_id) =
             cli_helper::ActivityCli::parse_summary_args(sub_m, &self.clock)?;
-        let activities = self.service.filter_activities(|(_i, a)| {
-            range_start <= a.get_start_time() && a.get_start_time() <= range_end
-        })?;
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_i, a)| {
+                range_start <= a.get_start_time() && a.get_start_time() <= range_end
+            })?;
+        let longest_title = activities
+            .iter()
+            .map(|(_id, a)| a.get_title().len())
+            .max()
+            .unwrap_or_default();
         if activities.is_empty() {
             println!("No filtered data found.");
         } else {
             for (id, finished) in activities {
-                let mut truncated_title = finished.get_title().to_string();
-                truncated_title.truncate(12);
                 let mut output = format!(
-                    "{:<12} {} {} {}",
-                    truncated_title,
+                    "{:width$} {} {} {}",
+                    finished.get_title(),
                     finished.get_start_time(),
                     finished.get_stop_time(),
-                    finished.get_duration()
+                    finished.get_duration(),
+                    width = longest_title
                 );
                 if display_id {
                     output = format!("{:>2} {}", id, output);
