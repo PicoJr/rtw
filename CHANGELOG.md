@@ -7,18 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
 * add config using [config-rs](https://docs.rs/crate/config/0.10.1).
+
+### Github CI
+
+* Add platforms: `macos-latest`, `windows-latest` (see [rust.yml](.github/workflows/rust.yml)).
 
 ## [1.0.0](https://crates.io/crates/rtw/1.0.0) Mar 16, 2020
 
-## Added
+### Added
 
 * crate [chrono-english](https://docs.rs/chrono-english/) for time parsing see [commands](commands.md).
 * more unit and integration tests
 * `summary --week` option
 * `summary range_start - range_end` syntax
 
-## Fixed
+### Fixed
 
 * Duration display bug: 1h was displayed as `01:60:3600` instead of `01:00:00`
 

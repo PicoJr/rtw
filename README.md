@@ -21,7 +21,9 @@ Development occurs on `dev`, releases are made on `master` branch.
 
 ## Install
 
-Supported OS: Linux. (it has not been tested on Windows)
+Supported OS: Linux, MacOS, Windows
+
+CI runs on `ubuntu-latest`, `macos-latest`, `windows-latest`.
 
 ### Cargo
 
@@ -40,7 +42,7 @@ cd rtw
 cargo build --release
 ```
 
-### From binaries (Linux)
+### From binaries (Linux only)
 
 Download the corresponding archive from the [Release page](https://github.com/picojr/rtw/releases).
 
