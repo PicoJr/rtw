@@ -72,7 +72,7 @@ fn split_time_range(tokens: &[String], clock: &dyn Clock) -> anyhow::Result<(Tim
 impl ActivityCli {
     pub fn get_app(&self) -> App {
         App::new("RTW")
-            .version("1.0.0")
+            .version("1.1.0")
             .author("PicoJr")
             .about("rust time tracking CLI")
             .arg(
