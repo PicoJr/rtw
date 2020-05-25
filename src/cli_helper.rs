@@ -158,6 +158,7 @@ impl ActivityCli {
                     ),
             )
             .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
+            .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
             .subcommand(
                 SubCommand::with_name("delete")
                     .about("Delete activity")

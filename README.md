@@ -25,6 +25,8 @@ Supported OS: Linux, MacOS, Windows
 
 CI runs on `ubuntu-latest`, `macos-latest`, `windows-latest`.
 
+Note: Windows support is only experimental. Some features may not be supported on Windows.
+
 ### Cargo
 
 ```

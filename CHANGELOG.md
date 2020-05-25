@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+* add `day` subcommand (display timeline for the current day)
+
 ## [1.1.0](https://crates.io/crates/rtw/1.1.0) Mar 22, 2020
 
 ### Added
