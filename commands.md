@@ -181,6 +181,16 @@ Example output:
 
 > id 0 = last finished activity
 
+### Display a timeline for the day
+
+```bash
+rtw day
+```
+
+Example output (YMMV):
+
+![timeline](img/day.png)
+
 ## Continue Activity
 
 ### Continue last finished activity

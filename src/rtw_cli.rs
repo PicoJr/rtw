@@ -1,5 +1,5 @@
 use crate::cli_helper;
-use crate::timeline::render;
+use crate::timeline::render_days;
 use clap::ArgMatches;
 use rtw::{Activity, ActivityId, ActivityService, Clock, OngoingActivity};
 
@@ -146,8 +146,23 @@ where
             self.service.filter_activities(|(_i, a)| {
                 range_start <= a.get_start_time() && a.get_start_time() <= range_end
             })?;
-        let rendered = render(activities.as_slice())?;
-        println!("{}", rendered);
+        let rendered = render_days(activities.as_slice())?;
+        for line in rendered {
+            println!("{}", line);
+        }
+        Ok(())
+    }
+
+    fn timeline_week(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let (range_start, range_end) = self.clock.this_week_range();
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_i, a)| {
+                range_start <= a.get_start_time() && a.get_start_time() <= range_end
+            })?;
+        let rendered = render_days(activities.as_slice())?;
+        for line in rendered {
+            println!("{}", line);
+        }
         Ok(())
     }
 
@@ -160,6 +175,7 @@ where
             ("delete", Some(sub_m)) => self.run_delete(sub_m),
             ("track", Some(sub_m)) => self.run_track(sub_m),
             ("day", Some(sub_m)) => self.timeline_day(sub_m),
+            ("week", Some(sub_m)) => self.timeline_week(sub_m),
             // default case: display current activity
             _ => self.display_current(),
         }

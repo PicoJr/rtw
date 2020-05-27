@@ -23,7 +23,7 @@ chrono-english = "0.1.4"
 config = "0.10.1"
 ansi_term = "0.12.1"
 term_size = "0.3.2"
-tbl = "0.1.0"
+tbl = "0.1.1"
 
 [dev-dependencies]
 tempfile = "3"
