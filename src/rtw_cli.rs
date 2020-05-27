@@ -1,4 +1,5 @@
 use crate::cli_helper;
+use crate::timeline::render_days;
 use clap::ArgMatches;
 use rtw::{Activity, ActivityId, ActivityService, Clock, OngoingActivity};
 
@@ -139,6 +140,32 @@ where
         Ok(())
     }
 
+    fn timeline_day(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let (range_start, range_end) = self.clock.today_range();
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_i, a)| {
+                range_start <= a.get_start_time() && a.get_start_time() <= range_end
+            })?;
+        let rendered = render_days(activities.as_slice())?;
+        for line in rendered {
+            println!("{}", line);
+        }
+        Ok(())
+    }
+
+    fn timeline_week(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let (range_start, range_end) = self.clock.this_week_range();
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_i, a)| {
+                range_start <= a.get_start_time() && a.get_start_time() <= range_end
+            })?;
+        let rendered = render_days(activities.as_slice())?;
+        for line in rendered {
+            println!("{}", line);
+        }
+        Ok(())
+    }
+
     pub fn run(&mut self, matches: ArgMatches) -> anyhow::Result<()> {
         match matches.subcommand() {
             ("start", Some(sub_m)) => self.run_start(sub_m),
@@ -147,6 +174,8 @@ where
             ("continue", Some(sub_m)) => self.run_continue(sub_m),
             ("delete", Some(sub_m)) => self.run_delete(sub_m),
             ("track", Some(sub_m)) => self.run_track(sub_m),
+            ("day", Some(sub_m)) => self.timeline_day(sub_m),
+            ("week", Some(sub_m)) => self.timeline_week(sub_m),
             // default case: display current activity
             _ => self.display_current(),
         }

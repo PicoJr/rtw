@@ -16,6 +16,7 @@ mod rtw_cli;
 mod rtw_config;
 mod service;
 mod time_tools;
+mod timeline;
 
 fn main() -> anyhow::Result<()> {
     let cli_helper = cli_helper::ActivityCli {};

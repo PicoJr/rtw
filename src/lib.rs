@@ -5,7 +5,7 @@
 //! For a stable feature-rich CLI time tracker, please use Timewarrior: <https://timewarrior.net/>.
 
 use anyhow::anyhow;
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Duration, Local};
 use serde::export::fmt::Error;
 use serde::export::Formatter;
 use serde::{Deserialize, Serialize};
@@ -68,6 +68,18 @@ impl fmt::Display for DurationW {
             (self.0.num_seconds() / 60) % 60,
             (self.0.num_seconds() % 60)
         )
+    }
+}
+
+impl From<Duration> for DurationW {
+    fn from(d: Duration) -> Self {
+        DurationW(d)
+    }
+}
+
+impl Into<Duration> for DurationW {
+    fn into(self) -> Duration {
+        self.0
     }
 }
 
