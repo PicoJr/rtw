@@ -33,11 +33,11 @@ impl BlockRenderer<Label> for ActivityRenderer {
     }
 }
 
-fn color(id: ActivityId) -> RGB {
-    match id % 3 {
-        0 => (27, 94, 32),
-        1 => (13, 71, 161),
-        _ => (191, 54, 12),
+fn color(id: ActivityId, colors: &[RGB]) -> RGB {
+    let color = colors.get(id % colors.len());
+    match color {
+        None => (0, 0, 0),
+        Some(c) => *c,
     }
 }
 
@@ -52,9 +52,9 @@ fn bounds(interval: &Interval) -> (f64, f64) {
 }
 
 // label for activities
-fn label(interval: &Interval) -> Option<Label> {
+fn label(interval: &Interval, colors: &[RGB]) -> Option<Label> {
     let (activity_id, activity) = interval;
-    Some((activity.get_title(), color(*activity_id)))
+    Some((activity.get_title(), color(*activity_id, colors)))
 }
 
 // label for legend
@@ -125,7 +125,7 @@ fn days(activities: &[Interval]) -> (i32, i32) {
     (min_day, max_day)
 }
 
-pub(crate) fn render_days(activities: &[Interval]) -> anyhow::Result<Vec<String>> {
+pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Result<Vec<String>> {
     let (width, _height) = term_size::dimensions().unwrap_or((DEFAULT_TERMINAL_SIZE, 0));
     let (min_second, max_second) = day_bounds(activities);
     let (min_day, max_day) = days(activities);
@@ -150,7 +150,7 @@ pub(crate) fn render_days(activities: &[Interval]) -> anyhow::Result<Vec<String>
             .render()
             .or_else(|_| Err(anyhow!("failed to create timeline")))?;
         rendered.push(format!("{}{:>8}", legend, "total"));
-        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &label)
+        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
             .with_renderer(&ActivityRenderer {})
             .with_length(available_length)
             .with_boundaries((min_second, max_second))

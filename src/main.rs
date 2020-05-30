@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     let app = cli_helper.get_app();
     let matches = app.get_matches();
     let storage_dir = match matches.value_of("directory") {
-        None => config.storage_dir_path,
+        None => config.storage_dir_path.clone(),
         Some(dir_str) => PathBuf::from_str(dir_str).expect("invalid directory"),
     };
     let current_activity_path = storage_dir.join(".rtw.json");
@@ -35,6 +35,6 @@ fn main() -> anyhow::Result<()> {
         JsonCurrentActivityRepository::new(current_activity_path),
     );
 
-    let mut rtw_cli = RTW::new(clock, service);
+    let mut rtw_cli = RTW::new(clock, service, config);
     rtw_cli.run(matches)
 }

@@ -1,4 +1,5 @@
 use crate::cli_helper;
+use crate::rtw_config::RTWConfig;
 use crate::timeline::render_days;
 use clap::ArgMatches;
 use rtw::{Activity, ActivityId, ActivityService, Clock, OngoingActivity};
@@ -10,6 +11,7 @@ where
 {
     clock: C,
     service: S,
+    config: RTWConfig,
 }
 
 impl<C, S> RTW<C, S>
@@ -17,8 +19,12 @@ where
     C: Clock,
     S: ActivityService,
 {
-    pub fn new(clock: C, service: S) -> Self {
-        RTW { clock, service }
+    pub fn new(clock: C, service: S, config: RTWConfig) -> Self {
+        RTW {
+            clock,
+            service,
+            config,
+        }
     }
 
     fn run_start(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
@@ -146,7 +152,7 @@ where
             self.service.filter_activities(|(_i, a)| {
                 range_start <= a.get_start_time() && a.get_start_time() <= range_end
             })?;
-        let rendered = render_days(activities.as_slice())?;
+        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
         for line in rendered {
             println!("{}", line);
         }
@@ -159,7 +165,7 @@ where
             self.service.filter_activities(|(_i, a)| {
                 range_start <= a.get_start_time() && a.get_start_time() <= range_end
             })?;
-        let rendered = render_days(activities.as_slice())?;
+        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
         for line in rendered {
             println!("{}", line);
         }
