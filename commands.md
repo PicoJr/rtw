@@ -16,6 +16,10 @@
          * [Display finished activities summary for last week](#display-finished-activities-summary-for-last-week)
          * [Display finished activities summary for range](#display-finished-activities-summary-for-range)
          * [Display finished activities id](#display-finished-activities-id)
+      * [Display a timeline](#display-a-timeline)
+         * [For the day](#for-the-day)
+         * [For the week](#for-the-week)
+         * [For a time range](#for-a-time-range)
       * [Continue Activity](#continue-activity)
          * [Continue last finished activity](#continue-last-finished-activity)
       * [Delete Activity](#delete-activity)
@@ -181,7 +185,9 @@ Example output:
 
 > id 0 = last finished activity
 
-### Display a timeline for the day
+## Display a timeline
+
+### For the day
 
 ```bash
 rtw day
@@ -190,6 +196,18 @@ rtw day
 Example output (YMMV):
 
 ![timeline](img/day.png)
+
+### For the week
+
+```bash
+rtw week
+```
+
+### For a time range
+
+```bash
+rtw timeline last monday - now
+```
 
 ## Continue Activity
 
