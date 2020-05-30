@@ -113,6 +113,21 @@ mod tests {
     }
 
     #[test]
+    fn timeline_nothing() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("timeline")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .assert()
+            .success();
+    }
+
+    #[test]
     fn continue_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();

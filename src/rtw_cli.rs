@@ -172,11 +172,26 @@ where
         Ok(())
     }
 
+    fn run_timeline(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
+        let ((range_start, range_end), _display_id) =
+            cli_helper::ActivityCli::parse_timeline_args(sub_m, &self.clock)?;
+        let activities: Vec<(ActivityId, Activity)> =
+            self.service.filter_activities(|(_i, a)| {
+                range_start <= a.get_start_time() && a.get_start_time() <= range_end
+            })?;
+        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
+        for line in rendered {
+            println!("{}", line);
+        }
+        Ok(())
+    }
+
     pub fn run(&mut self, matches: ArgMatches) -> anyhow::Result<()> {
         match matches.subcommand() {
             ("start", Some(sub_m)) => self.run_start(sub_m),
             ("stop", Some(sub_m)) => self.run_stop(sub_m),
             ("summary", Some(sub_m)) => self.run_summary(sub_m),
+            ("timeline", Some(sub_m)) => self.run_timeline(sub_m),
             ("continue", Some(sub_m)) => self.run_continue(sub_m),
             ("delete", Some(sub_m)) => self.run_delete(sub_m),
             ("track", Some(sub_m)) => self.run_track(sub_m),

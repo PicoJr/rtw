@@ -163,6 +163,20 @@ impl ActivityCli {
                 SubCommand::with_name("week").about("Display the current week as a timeline"),
             )
             .subcommand(
+                SubCommand::with_name("timeline")
+                    .about("Display finished activities timeline")
+                    .arg(
+                        Arg::with_name("tokens")
+                            .multiple(true)
+                            .required(false)
+                            .help(concat!(
+                                "optional interval time clue\n",
+                                "start - end\n",
+                                "e.g 'last monday - now' "
+                            )),
+                    ),
+            )
+            .subcommand(
                 SubCommand::with_name("delete")
                     .about("Delete activity")
                     .arg(Arg::with_name("id").required(true).help("activity id")),
@@ -238,6 +252,28 @@ impl ActivityCli {
             }
         };
         Ok((range, display_id))
+    }
+
+    pub fn parse_timeline_args(
+        timeline_m: &ArgMatches,
+        clock: &dyn Clock,
+    ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+        let display_id = timeline_m.is_present("id");
+        let values_arg = timeline_m.values_of("tokens");
+        if let Some(values) = values_arg {
+            let values: Vec<String> = values.map(String::from).collect();
+            let range_maybe = split_time_range(&values, clock);
+            match range_maybe {
+                Ok((range_start, range_end)) => {
+                    let range_start = clock.date_time(range_start);
+                    let range_end = clock.date_time(range_end);
+                    Ok(((range_start, range_end), display_id))
+                }
+                Err(e) => Err(anyhow::anyhow!(e)),
+            }
+        } else {
+            Ok((clock.today_range(), display_id))
+        }
     }
 
     pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
