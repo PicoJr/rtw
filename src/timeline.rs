@@ -139,6 +139,13 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             })
             .cloned()
             .collect();
+        let day_month = day_activities
+            .first()
+            .and_then(|(_, a)| {
+                let start_time: DateTime<Local> = a.get_start_time().into();
+                Some(start_time.format("%d/%m").to_string())
+            })
+            .unwrap_or_else(|| "??/??".to_string());
         let total: DurationW = DurationW::from(day_total(day_activities.as_slice()));
         let total_string = total.to_string();
         let right_padding = total_string.len() + 1; // +1 space
@@ -149,7 +156,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             .with_boundaries((min_second, max_second))
             .render()
             .or_else(|_| Err(anyhow!("failed to create timeline")))?;
-        rendered.push(format!("{}{:>8}", legend, "total"));
+        rendered.push(format!("{}{:>8}", legend, day_month));
         let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
             .with_renderer(&ActivityRenderer {})
             .with_length(available_length)
