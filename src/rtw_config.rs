@@ -66,6 +66,15 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
+    // make sure the config file in `example` folder is valid
+    fn example_config_valid() {
+        let example_config = PathBuf::from_str("example/rtw_config.json").unwrap();
+        let reader = File::open(example_config);
+        let config: serde_json::Result<RTWConfig> = serde_json::from_reader(reader.unwrap());
+        assert!(config.is_ok())
+    }
+
+    #[test]
     fn test_config_not_found_in_config_dir() {
         let test_config_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_config_dir.path().to_path_buf();
