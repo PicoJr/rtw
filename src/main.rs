@@ -3,7 +3,7 @@ extern crate clap;
 use crate::chrono_clock::ChronoClock;
 use crate::json_current::JsonCurrentActivityRepository;
 use crate::json_finished::JsonFinishedActivityRepository;
-use crate::rtw_cli::RTW;
+use crate::rtw_cli::{run, run_action};
 use crate::service::Service;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -31,11 +31,11 @@ fn main() -> anyhow::Result<()> {
     };
     let current_activity_path = storage_dir.join(".rtw.json");
     let finished_activity_path = storage_dir.join(".rtwh.json");
-    let service = Service::new(
+    let mut service = Service::new(
         JsonFinishedActivityRepository::new(finished_activity_path),
         JsonCurrentActivityRepository::new(current_activity_path),
     );
 
-    let mut rtw_cli = RTW::new(clock, service, config);
-    rtw_cli.run(matches)
+    let action = run(matches, &mut service, &clock)?;
+    run_action(action, &mut service, &clock, &config)
 }

@@ -2,206 +2,258 @@ use crate::cli_helper;
 use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
+use crate::rtw_core::datetimew::DateTimeW;
+use crate::rtw_core::repository::{CurrentActivityRepository, FinishedActivityRepository};
 use crate::rtw_core::service::ActivityService;
-use crate::rtw_core::ActivityId;
+use crate::rtw_core::{ActivityId, Tags};
+use crate::service::Service;
 use crate::timeline::render_days;
 use clap::ArgMatches;
 
-pub struct RTW<C, S>
-where
-    C: Clock,
-    S: ActivityService,
-{
-    clock: C,
-    service: S,
-    config: RTWConfig,
+type ActivityWithId = (ActivityId, Activity);
+
+pub(crate) enum RTWAction {
+    Start(OngoingActivity),
+    Track(Activity),
+    Stop(DateTimeW),
+    Summary(Vec<ActivityWithId>, bool),
+    Continue(Option<ActivityWithId>),
+    Delete(ActivityId),
+    Display(Option<OngoingActivity>),
+    Timeline(Vec<ActivityWithId>),
 }
 
-impl<C, S> RTW<C, S>
+fn run_start(start_time: DateTimeW, tags: Tags) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Start(OngoingActivity::new(start_time, tags)))
+}
+
+fn run_track(start_time: DateTimeW, stop_time: DateTimeW, tags: Tags) -> anyhow::Result<RTWAction> {
+    let activity = OngoingActivity::new(start_time, tags).into_activity(stop_time)?;
+    Ok(RTWAction::Track(activity))
+}
+
+fn run_stop(stop_time: DateTimeW) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Stop(stop_time))
+}
+
+fn run_summary(
+    range_start: DateTimeW,
+    range_end: DateTimeW,
+    display_id: bool,
+    activities: &[ActivityWithId],
+) -> anyhow::Result<RTWAction> {
+    let activities: Vec<(ActivityId, Activity)> = activities
+        .iter()
+        .filter(|(_i, a)| range_start <= a.get_start_time() && a.get_start_time() <= range_end)
+        .cloned()
+        .collect();
+    Ok(RTWAction::Summary(activities, display_id))
+}
+
+fn run_continue(activities: &[ActivityWithId]) -> anyhow::Result<RTWAction> {
+    let last_activity = activities.last();
+    Ok(RTWAction::Continue(last_activity.cloned()))
+}
+
+fn run_delete(id: ActivityId) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Delete(id))
+}
+
+fn display_current(current_maybe: Option<OngoingActivity>) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Display(current_maybe))
+}
+
+fn run_timeline(
+    range_start: DateTimeW,
+    range_end: DateTimeW,
+    _display_id: bool,
+    activities: &[ActivityWithId],
+) -> anyhow::Result<RTWAction> {
+    let activities: Vec<ActivityWithId> = activities
+        .iter()
+        .filter(|(_i, a)| range_start <= a.get_start_time() && a.get_start_time() <= range_end)
+        .cloned()
+        .collect();
+    Ok(RTWAction::Timeline(activities))
+}
+
+pub(crate) fn run<F, C, Cl>(
+    matches: ArgMatches,
+    service: &mut Service<F, C>,
+    clock: &Cl,
+) -> anyhow::Result<RTWAction>
 where
-    C: Clock,
-    S: ActivityService,
+    F: FinishedActivityRepository,
+    C: CurrentActivityRepository,
+    Cl: Clock,
 {
-    pub fn new(clock: C, service: S, config: RTWConfig) -> Self {
-        RTW {
-            clock,
-            service,
-            config,
+    match matches.subcommand() {
+        ("start", Some(sub_m)) => {
+            let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m, clock)?;
+            let abs_start_time = clock.date_time(start_time);
+            run_start(abs_start_time, tags)
+        }
+        ("stop", Some(sub_m)) => {
+            let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m, clock)?;
+            let abs_stop_time = clock.date_time(stop_time);
+            run_stop(abs_stop_time)
+        }
+        ("summary", Some(sub_m)) => {
+            let ((range_start, range_end), display_id) =
+                cli_helper::ActivityCli::parse_summary_args(sub_m, clock)?;
+            let activities = service.get_finished_activities()?;
+            run_summary(range_start, range_end, display_id, &activities)
+        }
+        ("timeline", Some(sub_m)) => {
+            let ((range_start, range_end), display_id) =
+                cli_helper::ActivityCli::parse_timeline_args(sub_m, clock)?;
+            let activities = service.get_finished_activities()?;
+            run_timeline(range_start, range_end, display_id, &activities)
+        }
+        ("continue", Some(_sub_m)) => {
+            let activities = service.get_finished_activities()?;
+            run_continue(&activities)
+        }
+        ("delete", Some(sub_m)) => {
+            let id = cli_helper::ActivityCli::parse_delete_args(sub_m)?;
+            run_delete(id)
+        }
+        ("track", Some(sub_m)) => {
+            let (start_time, stop_time, tags) =
+                cli_helper::ActivityCli::parse_track_args(sub_m, clock)?;
+            let start_time = clock.date_time(start_time);
+            let stop_time = clock.date_time(stop_time);
+            run_track(start_time, stop_time, tags)
+        }
+        ("day", Some(_sub_m)) => {
+            let (range_start, range_end) = clock.today_range();
+            let activities = service.get_finished_activities()?;
+            run_timeline(range_start, range_end, false, &activities)
+        }
+        ("week", Some(_sub_m)) => {
+            let (range_start, range_end) = clock.this_week_range();
+            let activities = service.get_finished_activities()?;
+            run_timeline(range_start, range_end, false, &activities)
+        }
+        // default case: display current activity
+        _ => {
+            let current = service.get_current_activity()?;
+            display_current(current)
         }
     }
+}
 
-    fn run_start(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m, &self.clock)?;
-        let abs_start_time = self.clock.date_time(start_time);
-        let started = self
-            .service
-            .start_activity(OngoingActivity::new(abs_start_time, tags))?;
-        println!("Tracking {}", started.get_title());
-        println!("Started  {}", started.get_start_time());
-        Ok(())
-    }
-
-    fn run_track(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (start_time, stop_time, tags) =
-            cli_helper::ActivityCli::parse_track_args(sub_m, &self.clock)?;
-        let activity = OngoingActivity::new(self.clock.date_time(start_time), tags)
-            .into_activity(self.clock.date_time(stop_time))?;
-        let tracked = self.service.track_activity(activity)?;
-        println!("Recorded {}", tracked.get_title());
-        println!("Started {:>20}", tracked.get_start_time());
-        println!("Ended   {:>20}", tracked.get_stop_time());
-        println!("Total   {:>20}", tracked.get_duration());
-        Ok(())
-    }
-
-    fn run_stop(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m, &self.clock)?;
-        let abs_stop_time = self.clock.date_time(stop_time);
-        let stopped_maybe = self.service.stop_current_activity(abs_stop_time)?;
-        match stopped_maybe {
-            Some(stopped) => {
-                println!("Recorded {}", stopped.get_title());
-                println!("Started {:>20}", stopped.get_start_time());
-                println!("Ended   {:>20}", stopped.get_stop_time());
-                println!("Total   {:>20}", stopped.get_duration());
-            }
-            None => println!("There is no active time tracking."),
+pub(crate) fn run_action<F, C, Cl>(
+    action: RTWAction,
+    service: &mut Service<F, C>,
+    clock: &Cl,
+    config: &RTWConfig,
+) -> anyhow::Result<()>
+where
+    F: FinishedActivityRepository,
+    C: CurrentActivityRepository,
+    Cl: Clock,
+{
+    match action {
+        RTWAction::Start(activity) => {
+            let started = service.start_activity(activity)?;
+            println!("Tracking {}", started.get_title());
+            println!("Started  {}", started.get_start_time());
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn run_summary(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let ((range_start, range_end), display_id) =
-            cli_helper::ActivityCli::parse_summary_args(sub_m, &self.clock)?;
-        let activities: Vec<(ActivityId, Activity)> =
-            self.service.filter_activities(|(_i, a)| {
-                range_start <= a.get_start_time() && a.get_start_time() <= range_end
-            })?;
-        let longest_title = activities
-            .iter()
-            .map(|(_id, a)| a.get_title().len())
-            .max()
-            .unwrap_or_default();
-        if activities.is_empty() {
-            println!("No filtered data found.");
-        } else {
-            for (id, finished) in activities {
-                let mut output = format!(
-                    "{:width$} {} {} {}",
-                    finished.get_title(),
-                    finished.get_start_time(),
-                    finished.get_stop_time(),
-                    finished.get_duration(),
-                    width = longest_title
-                );
-                if display_id {
-                    output = format!("{:>2} {}", id, output);
+        RTWAction::Track(activity) => {
+            let tracked = service.track_activity(activity)?;
+            println!("Recorded {}", tracked.get_title());
+            println!("Started {:>20}", tracked.get_start_time());
+            println!("Ended   {:>20}", tracked.get_stop_time());
+            println!("Total   {:>20}", tracked.get_duration());
+            Ok(())
+        }
+        RTWAction::Stop(stop_time) => {
+            let stopped_maybe = service.stop_current_activity(stop_time)?;
+            match stopped_maybe {
+                Some(stopped) => {
+                    println!("Recorded {}", stopped.get_title());
+                    println!("Started {:>20}", stopped.get_start_time());
+                    println!("Ended   {:>20}", stopped.get_stop_time());
+                    println!("Total   {:>20}", stopped.get_duration());
                 }
-                println!("{}", output)
+                None => println!("There is no active time tracking."),
             }
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn run_continue(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let activities: Vec<(ActivityId, Activity)> =
-            self.service.filter_activities(|(_, _)| true)?;
-        match activities.last() {
-            None => println!("No activity to continue from."),
-            Some((_id, finished)) => {
-                self.service.start_activity(OngoingActivity::new(
-                    self.clock.get_time(),
-                    finished.get_tags(),
-                ))?;
-                self.display_current()?;
+        RTWAction::Summary(activities, display_id) => {
+            let longest_title = activities
+                .iter()
+                .map(|(_id, a)| a.get_title().len())
+                .max()
+                .unwrap_or_default();
+            if activities.is_empty() {
+                println!("No filtered data found.");
+            } else {
+                for (id, finished) in activities {
+                    let mut output = format!(
+                        "{:width$} {} {} {}",
+                        finished.get_title(),
+                        finished.get_start_time(),
+                        finished.get_stop_time(),
+                        finished.get_duration(),
+                        width = longest_title
+                    );
+                    if display_id {
+                        output = format!("{:>1} {}", id, output);
+                    }
+                    println!("{}", output)
+                }
             }
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn run_delete(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let id = cli_helper::ActivityCli::parse_delete_args(sub_m)?;
-        let deleted_maybe = self.service.delete_activity(id)?;
-        match deleted_maybe {
-            None => println!("No activity found for id {}.", id),
-            Some(deleted) => {
-                println!("Deleted {}", deleted.get_title());
-                println!("Started {:>20}", deleted.get_start_time());
-                println!("Ended   {:>20}", deleted.get_stop_time());
-                println!("Total   {:>20}", deleted.get_duration());
+        RTWAction::Continue(last_activity_maybe) => {
+            match last_activity_maybe {
+                None => println!("No activity to continue from."),
+                Some((_id, finished)) => {
+                    service.start_activity(OngoingActivity::new(
+                        clock.get_time(),
+                        finished.get_tags(),
+                    ))?;
+                    let current = service.get_current_activity()?;
+                    if let Some(current) = current {
+                        println!("Tracking {}", current.get_title());
+                        println!("Total    {}", clock.get_time() - current.get_start_time());
+                    }
+                }
             }
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn display_current(&mut self) -> anyhow::Result<()> {
-        let current = self.service.get_current_activity()?;
-        match current {
-            Some(current) => {
-                println!("Tracking {}", current.get_title());
-                println!(
-                    "Total    {}",
-                    self.clock.get_time() - current.get_start_time()
-                );
+        RTWAction::Delete(activity_id) => {
+            let deleted_maybe = service.delete_activity(activity_id)?;
+            match deleted_maybe {
+                None => println!("No activity found for id {}.", activity_id),
+                Some(deleted) => {
+                    println!("Deleted {}", deleted.get_title());
+                    println!("Started {:>20}", deleted.get_start_time());
+                    println!("Ended   {:>20}", deleted.get_stop_time());
+                    println!("Total   {:>20}", deleted.get_duration());
+                }
             }
-            None => println!("There is no active time tracking."),
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn timeline_day(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (range_start, range_end) = self.clock.today_range();
-        let activities: Vec<(ActivityId, Activity)> =
-            self.service.filter_activities(|(_i, a)| {
-                range_start <= a.get_start_time() && a.get_start_time() <= range_end
-            })?;
-        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
-        for line in rendered {
-            println!("{}", line);
+        RTWAction::Display(activity_maybe) => {
+            match activity_maybe {
+                Some(current) => {
+                    println!("Tracking {}", current.get_title());
+                    println!("Total    {}", clock.get_time() - current.get_start_time());
+                }
+                None => println!("There is no active time tracking."),
+            }
+            Ok(())
         }
-        Ok(())
-    }
-
-    fn timeline_week(&mut self, _sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let (range_start, range_end) = self.clock.this_week_range();
-        let activities: Vec<(ActivityId, Activity)> =
-            self.service.filter_activities(|(_i, a)| {
-                range_start <= a.get_start_time() && a.get_start_time() <= range_end
-            })?;
-        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
-        for line in rendered {
-            println!("{}", line);
-        }
-        Ok(())
-    }
-
-    fn run_timeline(&mut self, sub_m: &ArgMatches) -> anyhow::Result<()> {
-        let ((range_start, range_end), _display_id) =
-            cli_helper::ActivityCli::parse_timeline_args(sub_m, &self.clock)?;
-        let activities: Vec<(ActivityId, Activity)> =
-            self.service.filter_activities(|(_i, a)| {
-                range_start <= a.get_start_time() && a.get_start_time() <= range_end
-            })?;
-        let rendered = render_days(activities.as_slice(), &self.config.timeline_colors)?;
-        for line in rendered {
-            println!("{}", line);
-        }
-        Ok(())
-    }
-
-    pub fn run(&mut self, matches: ArgMatches) -> anyhow::Result<()> {
-        match matches.subcommand() {
-            ("start", Some(sub_m)) => self.run_start(sub_m),
-            ("stop", Some(sub_m)) => self.run_stop(sub_m),
-            ("summary", Some(sub_m)) => self.run_summary(sub_m),
-            ("timeline", Some(sub_m)) => self.run_timeline(sub_m),
-            ("continue", Some(sub_m)) => self.run_continue(sub_m),
-            ("delete", Some(sub_m)) => self.run_delete(sub_m),
-            ("track", Some(sub_m)) => self.run_track(sub_m),
-            ("day", Some(sub_m)) => self.timeline_day(sub_m),
-            ("week", Some(sub_m)) => self.timeline_week(sub_m),
-            // default case: display current activity
-            _ => self.display_current(),
+        RTWAction::Timeline(activities) => {
+            let rendered = render_days(activities.as_slice(), &config.timeline_colors)?;
+            for line in rendered {
+                println!("{}", line);
+            }
+            Ok(())
         }
     }
 }

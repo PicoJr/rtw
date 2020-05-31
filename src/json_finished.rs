@@ -73,6 +73,10 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         Ok(filtered.collect())
     }
 
+    fn get_finished_activities(&self) -> anyhow::Result<Vec<(usize, Activity)>> {
+        self.get_sorted_activities()
+    }
+
     fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>> {
         let finished_activities = self.get_sorted_activities()?;
         let mut remove = Option::None;

@@ -19,6 +19,14 @@ pub trait FinishedActivityRepository {
     fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool;
+    /// Get all finished activities
+    ///
+    /// May fail depending on implementation
+    ///
+    /// Returns finished activities sorted by start date
+    ///
+    /// ActivityId: 0 <=> last finished activity
+    fn get_finished_activities(&self) -> anyhow::Result<Vec<(ActivityId, Activity)>>;
     /// Delete activity with id
     ///
     /// May fail depending on implementation

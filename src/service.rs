@@ -60,6 +60,10 @@ where
         self.finished.filter_activities(p)
     }
 
+    fn get_finished_activities(&self) -> anyhow::Result<Vec<(ActivityId, Activity)>> {
+        self.finished.get_finished_activities()
+    }
+
     fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
         self.finished.delete_activity(id)
     }
