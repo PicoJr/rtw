@@ -187,6 +187,8 @@ Example output:
 
 ## Display a timeline
 
+:warning: does not work if some activities are overlapping.
+
 ### For the day
 
 ```bash

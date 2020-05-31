@@ -5,7 +5,7 @@ use ansi_term::{Color, Style};
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Duration, Local, Timelike};
 use std::cmp::max;
-use tbl::{Block, BlockRenderer, Bound, RenderBlock, Renderer};
+use tbl::{Block, BlockRenderer, Bound, RenderBlock, Renderer, TBLError};
 
 type RGB = (u8, u8, u8);
 type Label = (String, RGB);
@@ -157,14 +157,24 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
-            .or_else(|_| Err(anyhow!("failed to create timeline")))?;
+            .or_else(|e| match e {
+                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
+                TBLError::Intersection(_, _) => Err(anyhow!(
+                    "failed to create timeline: some activities are overlapping"
+                )),
+            })?;
         rendered.push(format!("{}{:>8}", legend, day_month));
         let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
             .with_renderer(&ActivityRenderer {})
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
-            .or_else(|_| Err(anyhow!("failed to create timeline")))?;
+            .or_else(|e| match e {
+                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
+                TBLError::Intersection(_, _) => Err(anyhow!(
+                    "failed to create timeline: some activities are overlapping"
+                )),
+            })?;
         rendered.push(format!("{}{}", timeline, total_string));
     }
     Ok(rendered)
