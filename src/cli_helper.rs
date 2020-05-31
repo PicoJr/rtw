@@ -1,7 +1,9 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
+use crate::rtw_core::clock::{Clock, Time};
+use crate::rtw_core::datetimew::DateTimeW;
+use crate::rtw_core::{ActivityId, Tags};
 use crate::time_tools::TimeTools;
-use rtw::{ActivityId, Clock, DateTimeW, Tags, Time};
 use std::str::FromStr;
 
 pub struct ActivityCli {}
@@ -294,8 +296,9 @@ mod tests {
     use crate::cli_helper::{
         split_time_clue_from_tags, split_time_range, split_time_range_from_tags,
     };
+    use crate::rtw_core::clock::Time;
+    use crate::rtw_core::Tags;
     use crate::time_tools::TimeTools;
-    use rtw::{Tags, Time};
 
     #[test]
     // rtw start

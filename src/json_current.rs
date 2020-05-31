@@ -1,5 +1,6 @@
+use crate::rtw_core::activity::OngoingActivity;
+use crate::rtw_core::repository::CurrentActivityRepository;
 use anyhow::Context;
-use rtw::{CurrentActivityRepository, OngoingActivity};
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
