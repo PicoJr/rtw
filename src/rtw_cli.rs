@@ -1,8 +1,11 @@
 use crate::cli_helper;
 use crate::rtw_config::RTWConfig;
+use crate::rtw_core::activity::{Activity, OngoingActivity};
+use crate::rtw_core::clock::Clock;
+use crate::rtw_core::service::ActivityService;
+use crate::rtw_core::ActivityId;
 use crate::timeline::render_days;
 use clap::ArgMatches;
-use rtw::{Activity, ActivityId, ActivityService, Clock, OngoingActivity};
 
 pub struct RTW<C, S>
 where

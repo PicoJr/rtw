@@ -1,5 +1,3 @@
-extern crate rtw;
-
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;

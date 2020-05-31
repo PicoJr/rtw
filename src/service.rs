@@ -1,8 +1,9 @@
+use crate::rtw_core::activity::{Activity, OngoingActivity};
+use crate::rtw_core::datetimew::DateTimeW;
+use crate::rtw_core::repository::{CurrentActivityRepository, FinishedActivityRepository};
+use crate::rtw_core::service::ActivityService;
+use crate::rtw_core::ActivityId;
 use anyhow::Error;
-use rtw::{
-    Activity, ActivityId, ActivityService, CurrentActivityRepository, DateTimeW,
-    FinishedActivityRepository, OngoingActivity,
-};
 
 pub struct Service<F, C>
 where
@@ -74,8 +75,11 @@ mod tests {
     use crate::chrono_clock::ChronoClock;
     use crate::json_current::JsonCurrentActivityRepository;
     use crate::json_finished::JsonFinishedActivityRepository;
+    use crate::rtw_core::activity::OngoingActivity;
+    use crate::rtw_core::clock::Clock;
+    use crate::rtw_core::datetimew::DateTimeW;
+    use crate::rtw_core::service::ActivityService;
     use crate::service::Service;
-    use rtw::{ActivityService, Clock, DateTimeW, OngoingActivity};
     use tempfile::{tempdir, TempDir};
 
     fn build_json_service(

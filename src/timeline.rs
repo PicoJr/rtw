@@ -1,7 +1,9 @@
+use crate::rtw_core::activity::Activity;
+use crate::rtw_core::durationw::DurationW;
+use crate::rtw_core::ActivityId;
 use ansi_term::{Color, Style};
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Duration, Local, Timelike};
-use rtw::{Activity, ActivityId, DurationW};
 use std::cmp::max;
 use tbl::{Block, BlockRenderer, Bound, RenderBlock, Renderer};
 

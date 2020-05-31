@@ -14,6 +14,7 @@ mod json_current;
 mod json_finished;
 mod rtw_cli;
 mod rtw_config;
+mod rtw_core;
 mod service;
 mod time_tools;
 mod timeline;

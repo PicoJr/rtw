@@ -1,5 +1,7 @@
-use anyhow::{Context, Error};
-use rtw::{Activity, ActivityId, FinishedActivityRepository};
+use crate::rtw_core::activity::Activity;
+use crate::rtw_core::repository::FinishedActivityRepository;
+use crate::rtw_core::ActivityId;
+use anyhow::Context;
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -14,7 +16,7 @@ impl JsonFinishedActivityRepository {
         JsonFinishedActivityRepository { writer_path: path }
     }
 
-    fn get_finished_activities(&self) -> Result<Vec<Activity>, Error> {
+    fn get_finished_activities(&self) -> anyhow::Result<Vec<Activity>> {
         if Path::exists(&self.writer_path) {
             let mut activities: Activities = vec![];
             let file = OpenOptions::new()
@@ -32,7 +34,7 @@ impl JsonFinishedActivityRepository {
         }
     }
 
-    fn get_sorted_activities(&self) -> Result<Vec<(ActivityId, Activity)>, Error> {
+    fn get_sorted_activities(&self) -> anyhow::Result<Vec<(ActivityId, Activity)>> {
         let mut finished_activities = self.get_finished_activities()?;
         finished_activities.sort();
         Ok((0..finished_activities.len())
@@ -43,7 +45,7 @@ impl JsonFinishedActivityRepository {
 }
 
 impl FinishedActivityRepository for JsonFinishedActivityRepository {
-    fn write_activity(&mut self, activity: Activity) -> Result<(), Error> {
+    fn write_activity(&mut self, activity: Activity) -> anyhow::Result<()> {
         if !Path::exists(&self.writer_path) {
             let file =
                 File::create(&self.writer_path).context("creating finished activity file")?;
@@ -62,7 +64,7 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
@@ -71,7 +73,7 @@ impl FinishedActivityRepository for JsonFinishedActivityRepository {
         Ok(filtered.collect())
     }
 
-    fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
+    fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>> {
         let finished_activities = self.get_sorted_activities()?;
         let mut remove = Option::None;
         let mut keep: Vec<Activity> = vec![];
