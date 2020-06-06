@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 type Activities = Vec<Activity>;
+type ActivityWithId = (ActivityId, Activity);
 
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
@@ -88,10 +89,9 @@ impl Storage for JsonStorage {
 
     fn delete_activity(&self, id: usize) -> Result<Option<Activity>, Self::StorageError> {
         let finished_activities = self.get_sorted_activities()?;
-        let (removed, kept): (Vec<&(ActivityId, Activity)>, Vec<&(ActivityId, Activity)>) =
-            finished_activities
-                .iter()
-                .partition(|(finished_id, _)| *finished_id == id);
+        let (removed, kept): (Vec<&ActivityWithId>, Vec<&ActivityWithId>) = finished_activities
+            .iter()
+            .partition(|(finished_id, _)| *finished_id == id);
         let kept: Vec<&Activity> = kept.iter().map(|(_, a)| a).collect();
         let file = OpenOptions::new()
             .create(true)

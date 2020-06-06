@@ -1,8 +1,9 @@
-use crate::rtw_core::activity::{Activity, OngoingActivity};
+use crate::rtw_core::activity::{intersect, Activity, OngoingActivity};
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::service::ActivityService;
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
+use anyhow::anyhow;
 
 pub struct Service<S>
 where
@@ -29,10 +30,15 @@ where
     }
 
     fn start_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<OngoingActivity> {
-        self.stop_current_activity(activity.start_time)?;
-        let started = OngoingActivity::new(activity.start_time, activity.tags);
-        self.storage.set_current_activity(started.clone())?;
-        Ok(started)
+        let finished = self.storage.get_finished_activities()?;
+        let intersections = time_intersections(finished.as_slice(), &activity.start_time);
+        if intersections.is_empty() {
+            self.stop_current_activity(activity.start_time)?;
+            self.storage.set_current_activity(activity.clone())?;
+            Ok(activity)
+        } else {
+            Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+        }
     }
 
     fn stop_current_activity(&mut self, time: DateTimeW) -> anyhow::Result<Option<Activity>> {
@@ -40,10 +46,16 @@ where
         match current {
             None => Ok(None),
             Some(current_activity) => {
-                self.storage
-                    .write_activity(current_activity.clone().into_activity(time)?)?;
-                self.storage.reset_current_activity()?;
-                Ok(Some(current_activity.into_activity(time)?))
+                let stopped = current_activity.clone().into_activity(time)?;
+                let finished = self.storage.get_finished_activities()?;
+                let intersections = activity_intersections(finished.as_slice(), &stopped);
+                if intersections.is_empty() {
+                    self.storage.write_activity(stopped)?;
+                    self.storage.reset_current_activity()?;
+                    Ok(Some(current_activity.into_activity(time)?))
+                } else {
+                    Err(anyhow!("{:?} would overlap {:?}", stopped, intersections))
+                }
             }
         }
     }
@@ -64,9 +76,38 @@ where
     }
 
     fn track_activity(&mut self, activity: Activity) -> anyhow::Result<Activity> {
-        self.storage.write_activity(activity.clone())?;
-        Ok(activity)
+        let finished = self.storage.get_finished_activities()?;
+        let intersections = activity_intersections(finished.as_slice(), &activity);
+        if intersections.is_empty() {
+            self.storage.write_activity(activity.clone())?;
+            Ok(activity)
+        } else {
+            Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+        }
     }
+}
+
+fn activity_intersections(
+    activities: &[(ActivityId, Activity)],
+    activity: &Activity,
+) -> Vec<Activity> {
+    activities
+        .iter()
+        .filter_map(|(_, a)| {
+            intersect(a, &activity.get_start_time())
+                .or_else(|| intersect(a, &activity.get_stop_time()))
+        })
+        .collect()
+}
+
+fn time_intersections(
+    activities: &[(ActivityId, Activity)],
+    start_time: &DateTimeW,
+) -> Vec<Activity> {
+    activities
+        .iter()
+        .filter_map(|(_, a)| intersect(a, start_time))
+        .collect()
 }
 
 #[cfg(test)]

@@ -92,3 +92,11 @@ impl OngoingActivity {
         }
     }
 }
+
+pub fn intersect(finished: &Activity, datetimew: &DateTimeW) -> Option<Activity> {
+    if (&finished.start_time < datetimew) && (datetimew < &finished.stop_time) {
+        Some(finished.clone())
+    } else {
+        None
+    }
+}
