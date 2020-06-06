@@ -3,8 +3,8 @@ use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
 use crate::rtw_core::datetimew::DateTimeW;
-use crate::rtw_core::repository::{CurrentActivityRepository, FinishedActivityRepository};
 use crate::rtw_core::service::ActivityService;
+use crate::rtw_core::storage::Storage;
 use crate::rtw_core::{ActivityId, Tags};
 use crate::service::Service;
 use crate::timeline::render_days;
@@ -77,14 +77,13 @@ fn run_timeline(
     Ok(RTWAction::Timeline(activities))
 }
 
-pub(crate) fn run<F, C, Cl>(
+pub(crate) fn run<S, Cl>(
     matches: ArgMatches,
-    service: &mut Service<F, C>,
+    service: &mut Service<S>,
     clock: &Cl,
 ) -> anyhow::Result<RTWAction>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
     Cl: Clock,
 {
     match matches.subcommand() {
@@ -143,15 +142,14 @@ where
     }
 }
 
-pub(crate) fn run_action<F, C, Cl>(
+pub(crate) fn run_action<S, Cl>(
     action: RTWAction,
-    service: &mut Service<F, C>,
+    service: &mut Service<S>,
     clock: &Cl,
     config: &RTWConfig,
 ) -> anyhow::Result<()>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
     Cl: Clock,
 {
     match action {

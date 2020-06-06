@@ -2,8 +2,8 @@ pub mod activity;
 pub mod clock;
 pub mod datetimew;
 pub mod durationw;
-pub mod repository;
 pub mod service;
+pub mod storage;
 
 /// Absolute dates are parsed and displayed using this format
 ///

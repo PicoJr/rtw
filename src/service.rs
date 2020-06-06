@@ -1,75 +1,70 @@
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::datetimew::DateTimeW;
-use crate::rtw_core::repository::{CurrentActivityRepository, FinishedActivityRepository};
 use crate::rtw_core::service::ActivityService;
+use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
-use anyhow::Error;
 
-pub struct Service<F, C>
+pub struct Service<S>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
 {
-    finished: F,
-    current: C,
+    storage: S,
 }
 
-impl<F, C> Service<F, C>
+impl<S> Service<S>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
 {
-    pub fn new(finished: F, current: C) -> Self {
-        Service { finished, current }
+    pub fn new(storage: S) -> Self {
+        Service { storage }
     }
 }
 
-impl<F, C> ActivityService for Service<F, C>
+impl<S> ActivityService for Service<S>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
 {
     fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>> {
-        self.current.get_current_activity()
+        self.storage.get_current_activity().map_err(|e| e.into())
     }
 
     fn start_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<OngoingActivity> {
         self.stop_current_activity(activity.start_time)?;
         let started = OngoingActivity::new(activity.start_time, activity.tags);
-        self.current.set_current_activity(started.clone())?;
+        self.storage.set_current_activity(started.clone())?;
         Ok(started)
     }
 
     fn stop_current_activity(&mut self, time: DateTimeW) -> anyhow::Result<Option<Activity>> {
-        let current = self.current.get_current_activity()?;
+        let current = self.storage.get_current_activity()?;
         match current {
             None => Ok(None),
             Some(current_activity) => {
-                self.finished
+                self.storage
                     .write_activity(current_activity.clone().into_activity(time)?)?;
-                self.current.reset_current_activity()?;
+                self.storage.reset_current_activity()?;
                 Ok(Some(current_activity.into_activity(time)?))
             }
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<(ActivityId, Activity)>, Error>
+    fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
-        self.finished.filter_activities(p)
+        self.storage.filter_activities(p).map_err(|e| e.into())
     }
 
     fn get_finished_activities(&self) -> anyhow::Result<Vec<(ActivityId, Activity)>> {
-        self.finished.get_finished_activities()
+        self.storage.get_finished_activities().map_err(|e| e.into())
     }
 
-    fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Error> {
-        self.finished.delete_activity(id)
+    fn delete_activity(&self, id: ActivityId) -> anyhow::Result<Option<Activity>> {
+        self.storage.delete_activity(id).map_err(|e| e.into())
     }
 
-    fn track_activity(&mut self, activity: Activity) -> Result<Activity, Error> {
-        self.finished.write_activity(activity.clone())?;
+    fn track_activity(&mut self, activity: Activity) -> anyhow::Result<Activity> {
+        self.storage.write_activity(activity.clone())?;
         Ok(activity)
     }
 }
@@ -77,8 +72,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::chrono_clock::ChronoClock;
-    use crate::json_current::JsonCurrentActivityRepository;
-    use crate::json_finished::JsonFinishedActivityRepository;
+    use crate::json_storage::JsonStorage;
     use crate::rtw_core::activity::OngoingActivity;
     use crate::rtw_core::clock::Clock;
     use crate::rtw_core::datetimew::DateTimeW;
@@ -86,15 +80,10 @@ mod tests {
     use crate::service::Service;
     use tempfile::{tempdir, TempDir};
 
-    fn build_json_service(
-        test_dir: &TempDir,
-    ) -> Service<JsonFinishedActivityRepository, JsonCurrentActivityRepository> {
-        let writer_path = test_dir.path().join(".rtww.json");
-        let repository_path = test_dir.path().join(".rtwr.json");
-        Service::new(
-            JsonFinishedActivityRepository::new(writer_path),
-            JsonCurrentActivityRepository::new(repository_path),
-        )
+    fn build_json_service(test_dir: &TempDir) -> Service<JsonStorage> {
+        let finished_path = test_dir.path().join(".rtwh.json");
+        let current_path = test_dir.path().join(".rtwc.json");
+        Service::new(JsonStorage::new(current_path, finished_path))
     }
 
     #[test]
