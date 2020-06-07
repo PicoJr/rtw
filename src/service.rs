@@ -1,4 +1,4 @@
-use crate::rtw_core::activity::{intersect, Activity, OngoingActivity};
+use crate::rtw_core::activity::{intersect, overlap, Activity, OngoingActivity};
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::service::ActivityService;
 use crate::rtw_core::storage::Storage;
@@ -60,6 +60,10 @@ where
         }
     }
 
+    fn cancel_current_activity(&mut self) -> anyhow::Result<Option<OngoingActivity>> {
+        self.storage.reset_current_activity().map_err(|e| e.into())
+    }
+
     fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
@@ -93,10 +97,7 @@ fn activity_intersections(
 ) -> Vec<Activity> {
     activities
         .iter()
-        .filter_map(|(_, a)| {
-            intersect(a, &activity.get_start_time())
-                .or_else(|| intersect(a, &activity.get_stop_time()))
-        })
+        .filter_map(|(_, a)| overlap(a, activity))
         .collect()
 }
 
@@ -119,6 +120,7 @@ mod tests {
     use crate::rtw_core::datetimew::DateTimeW;
     use crate::rtw_core::service::ActivityService;
     use crate::service::Service;
+    use chrono::{Local, TimeZone};
     use tempfile::{tempdir, TempDir};
 
     fn build_json_service(test_dir: &TempDir) -> Service<JsonStorage> {
@@ -190,6 +192,75 @@ mod tests {
     }
 
     #[test]
+    fn test_start_intersecting_activity() {
+        let test_dir = tempdir().expect("error while creating tempdir");
+        let mut service = build_json_service(&test_dir);
+        let finished = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T09:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        )
+        .into_activity(
+            Local
+                .datetime_from_str("2020-12-25T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+        )
+        .unwrap();
+        let tracked = service.track_activity(finished);
+        assert!(tracked.is_ok());
+        let other = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        );
+        let started = service.start_activity(other);
+        assert!(started.is_err());
+    }
+
+    #[test]
+    fn test_stop_intersecting_activity() {
+        let test_dir = tempdir().expect("error while creating tempdir");
+        let mut service = build_json_service(&test_dir);
+        let finished = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T09:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        )
+        .into_activity(
+            Local
+                .datetime_from_str("2020-12-25T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+        )
+        .unwrap();
+        let tracked = service.track_activity(finished);
+        assert!(tracked.is_ok());
+        let other = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T08:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        );
+        let started = service.start_activity(other);
+        assert!(started.is_ok());
+        let stopped = service.stop_current_activity(
+            Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+        );
+        assert!(stopped.is_err());
+    }
+
+    #[test]
     fn test_summary_nothing() {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
@@ -239,5 +310,43 @@ mod tests {
             range_start <= a.get_start_time() && a.get_start_time() <= range_end
         });
         assert!(activities.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_track_intersecting_activity() {
+        let test_dir = tempdir().expect("error while creating tempdir");
+        let mut service = build_json_service(&test_dir);
+        let finished = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T09:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        )
+        .into_activity(
+            Local
+                .datetime_from_str("2020-12-25T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+        )
+        .unwrap();
+        let tracked = service.track_activity(finished);
+        assert!(tracked.is_ok());
+        let other = OngoingActivity::new(
+            Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            vec![],
+        )
+        .into_activity(
+            Local
+                .datetime_from_str("2020-12-25T10:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+        )
+        .unwrap();
+        let tracked = service.track_activity(other);
+        assert!(tracked.is_err());
     }
 }

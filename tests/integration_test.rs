@@ -212,6 +212,27 @@ mod tests {
     }
 
     #[test]
+    fn start_then_cancel() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("cancel")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Cancelled foo"));
+    }
+
+    #[test]
     fn start_then_stop_then_delete() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();

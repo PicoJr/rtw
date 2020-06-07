@@ -46,5 +46,5 @@ pub trait Storage {
     /// Reset current activity to none
     ///
     /// After calling this function, get_current_activity should return None
-    fn reset_current_activity(&mut self) -> Result<(), Self::StorageError>;
+    fn reset_current_activity(&mut self) -> Result<Option<OngoingActivity>, Self::StorageError>;
 }

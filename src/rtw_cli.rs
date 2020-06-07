@@ -13,6 +13,7 @@ use clap::ArgMatches;
 type ActivityWithId = (ActivityId, Activity);
 
 pub(crate) enum RTWAction {
+    Cancel(Option<OngoingActivity>),
     Start(OngoingActivity),
     Track(Activity),
     Stop(DateTimeW),
@@ -61,6 +62,10 @@ fn run_delete(id: ActivityId) -> anyhow::Result<RTWAction> {
 
 fn display_current(current_maybe: Option<OngoingActivity>) -> anyhow::Result<RTWAction> {
     Ok(RTWAction::Display(current_maybe))
+}
+
+fn cancel_current(current_maybe: Option<OngoingActivity>) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Cancel(current_maybe))
 }
 
 fn run_timeline(
@@ -133,6 +138,10 @@ where
             let (range_start, range_end) = clock.this_week_range();
             let activities = service.get_finished_activities()?;
             run_timeline(range_start, range_end, false, &activities)
+        }
+        ("cancel", Some(_sub_m)) => {
+            let current = service.get_current_activity()?;
+            cancel_current(current)
         }
         // default case: display current activity
         _ => {
@@ -250,6 +259,21 @@ where
             let rendered = render_days(activities.as_slice(), &config.timeline_colors)?;
             for line in rendered {
                 println!("{}", line);
+            }
+            Ok(())
+        }
+        RTWAction::Cancel(_current_maybe) => {
+            let cancelled_maybe = service.cancel_current_activity()?;
+            match cancelled_maybe {
+                Some(cancelled) => {
+                    println!("Cancelled {}", cancelled.get_title());
+                    println!("Started   {:>20}", cancelled.get_start_time());
+                    println!(
+                        "Total     {:>20}",
+                        clock.get_time() - cancelled.get_start_time()
+                    );
+                }
+                None => println!("Nothing to cancel: there is no active time tracking."),
             }
             Ok(())
         }

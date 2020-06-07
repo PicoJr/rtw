@@ -11,9 +11,9 @@ type ActivityWithId = (ActivityId, Activity);
 
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
-    #[error("data store disconnected")]
+    #[error("storage io error")]
     IOError(#[from] std::io::Error),
-    #[error("data store disconnected")]
+    #[error("(de)serialization failed")]
     SerdeJsonError(#[from] serde_json::error::Error),
 }
 
@@ -127,10 +127,11 @@ impl Storage for JsonStorage {
         Ok(())
     }
 
-    fn reset_current_activity(&mut self) -> Result<(), Self::StorageError> {
+    fn reset_current_activity(&mut self) -> Result<Option<OngoingActivity>, Self::StorageError> {
+        let ongoing = self.get_current_activity()?;
         if Path::exists(&self.current_path) {
             fs::remove_file(&self.current_path)?
         }
-        Ok(())
+        Ok(ongoing)
     }
 }

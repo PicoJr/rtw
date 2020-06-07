@@ -10,6 +10,7 @@
          * [Stop current activity now](#stop-current-activity-now)
          * [Stop current activity 4 minutes ago](#stop-current-activity-4-minutes-ago)
          * [Stop current activity at a specific time](#stop-current-activity-at-a-specific-time)
+      * [Cancel current activity](#cancel-current-activity)
       * [Display Summary](#display-summary)
          * [Display finished activities summary for today](#display-finished-activities-summary-for-today)
          * [Display finished activities summary for yesterday](#display-finished-activities-summary-for-yesterday)
@@ -117,6 +118,20 @@ Recorded write doc
 Started 2019-12-25T19:43:00
 Ended   2019-12-25T19:45:00
 Total   00:02:00
+```
+
+## Cancel current activity
+
+Example:
+```
+rtw cancel
+```
+
+Example output:
+```
+Cancelled write doc
+Started   2019-12-24T19:43:00
+Total     00:20:05
 ```
 
 ## Display Summary

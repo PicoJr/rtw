@@ -22,6 +22,12 @@ pub trait ActivityService {
     ///
     /// Returns stopped activity if any
     fn stop_current_activity(&mut self, time: DateTimeW) -> anyhow::Result<Option<Activity>>;
+    /// Cancel current activity
+    ///
+    /// May fail depending on backend implementation
+    ///
+    /// Returns cancelled activity if any
+    fn cancel_current_activity(&mut self) -> anyhow::Result<Option<OngoingActivity>>;
     /// Filter finished activities
     ///
     /// May fail depending on implementation
