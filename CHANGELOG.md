@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+* add `cancel` subcommand.
+* deny overlapping activities
 * add `timeline` subcommand.
 * timeline colors can be configured in `rtw_config.json`
 * add `day` subcommand (display timeline for the current day)

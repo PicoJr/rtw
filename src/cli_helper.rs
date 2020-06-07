@@ -183,6 +183,7 @@ impl ActivityCli {
                     .about("Delete activity")
                     .arg(Arg::with_name("id").required(true).help("activity id")),
             )
+            .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
     }
 
     pub fn parse_start_args(

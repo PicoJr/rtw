@@ -3,8 +3,8 @@ use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
 use crate::rtw_core::datetimew::DateTimeW;
-use crate::rtw_core::repository::{CurrentActivityRepository, FinishedActivityRepository};
 use crate::rtw_core::service::ActivityService;
+use crate::rtw_core::storage::Storage;
 use crate::rtw_core::{ActivityId, Tags};
 use crate::service::Service;
 use crate::timeline::render_days;
@@ -13,6 +13,7 @@ use clap::ArgMatches;
 type ActivityWithId = (ActivityId, Activity);
 
 pub(crate) enum RTWAction {
+    Cancel(Option<OngoingActivity>),
     Start(OngoingActivity),
     Track(Activity),
     Stop(DateTimeW),
@@ -63,6 +64,10 @@ fn display_current(current_maybe: Option<OngoingActivity>) -> anyhow::Result<RTW
     Ok(RTWAction::Display(current_maybe))
 }
 
+fn cancel_current(current_maybe: Option<OngoingActivity>) -> anyhow::Result<RTWAction> {
+    Ok(RTWAction::Cancel(current_maybe))
+}
+
 fn run_timeline(
     range_start: DateTimeW,
     range_end: DateTimeW,
@@ -77,14 +82,13 @@ fn run_timeline(
     Ok(RTWAction::Timeline(activities))
 }
 
-pub(crate) fn run<F, C, Cl>(
+pub(crate) fn run<S, Cl>(
     matches: ArgMatches,
-    service: &mut Service<F, C>,
+    service: &mut Service<S>,
     clock: &Cl,
 ) -> anyhow::Result<RTWAction>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
     Cl: Clock,
 {
     match matches.subcommand() {
@@ -135,6 +139,10 @@ where
             let activities = service.get_finished_activities()?;
             run_timeline(range_start, range_end, false, &activities)
         }
+        ("cancel", Some(_sub_m)) => {
+            let current = service.get_current_activity()?;
+            cancel_current(current)
+        }
         // default case: display current activity
         _ => {
             let current = service.get_current_activity()?;
@@ -143,15 +151,14 @@ where
     }
 }
 
-pub(crate) fn run_action<F, C, Cl>(
+pub(crate) fn run_action<S, Cl>(
     action: RTWAction,
-    service: &mut Service<F, C>,
+    service: &mut Service<S>,
     clock: &Cl,
     config: &RTWConfig,
 ) -> anyhow::Result<()>
 where
-    F: FinishedActivityRepository,
-    C: CurrentActivityRepository,
+    S: Storage,
     Cl: Clock,
 {
     match action {
@@ -252,6 +259,21 @@ where
             let rendered = render_days(activities.as_slice(), &config.timeline_colors)?;
             for line in rendered {
                 println!("{}", line);
+            }
+            Ok(())
+        }
+        RTWAction::Cancel(_current_maybe) => {
+            let cancelled_maybe = service.cancel_current_activity()?;
+            match cancelled_maybe {
+                Some(cancelled) => {
+                    println!("Cancelled {}", cancelled.get_title());
+                    println!("Started   {:>20}", cancelled.get_start_time());
+                    println!(
+                        "Total     {:>20}",
+                        clock.get_time() - cancelled.get_start_time()
+                    );
+                }
+                None => println!("Nothing to cancel: there is no active time tracking."),
             }
             Ok(())
         }

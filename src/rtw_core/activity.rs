@@ -92,3 +92,125 @@ impl OngoingActivity {
         }
     }
 }
+
+pub fn intersect(finished: &Activity, datetimew: &DateTimeW) -> Option<Activity> {
+    if (&finished.start_time < datetimew) && (datetimew < &finished.stop_time) {
+        Some(finished.clone())
+    } else {
+        None
+    }
+}
+
+pub fn overlap(finished: &Activity, other: &Activity) -> Option<Activity> {
+    if finished < other {
+        intersect(finished, &other.start_time)
+    } else {
+        intersect(other, &finished.start_time).map(|_| finished.clone())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::rtw_core::activity::{intersect, overlap, Activity};
+    use chrono::{Local, TimeZone};
+
+    #[test]
+    fn test_intersect() {
+        let finished = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T09:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        let date = Local
+            .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+            .unwrap()
+            .into();
+        assert!(intersect(&finished, &date).is_some());
+        let date = Local
+            .datetime_from_str("2020-12-25T10:30:00", "%Y-%m-%dT%H:%M:%S")
+            .unwrap()
+            .into();
+        assert!(intersect(&finished, &date).is_none());
+    }
+
+    #[test]
+    fn test_overlap() {
+        let finished = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T09:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        let other = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T11:00:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        assert!(overlap(&finished, &other).is_some());
+        let other = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T08:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        assert!(overlap(&finished, &other).is_some());
+        let other = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T08:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T10:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        assert!(overlap(&finished, &other).is_some());
+        let other = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T09:45:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        assert!(overlap(&finished, &other).is_some());
+        let other = Activity {
+            start_time: Local
+                .datetime_from_str("2020-12-25T10:30:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            stop_time: Local
+                .datetime_from_str("2020-12-25T11:45:00", "%Y-%m-%dT%H:%M:%S")
+                .unwrap()
+                .into(),
+            tags: vec![],
+        };
+        assert!(overlap(&finished, &other).is_none());
+    }
+}

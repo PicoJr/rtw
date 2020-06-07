@@ -212,6 +212,27 @@ mod tests {
     }
 
     #[test]
+    fn start_then_cancel() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("cancel")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Cancelled foo"));
+    }
+
+    #[test]
     fn start_then_stop_then_delete() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -332,6 +353,33 @@ mod tests {
             .arg("track")
             .arg("-")
             .arg("foo")
+            .assert()
+            .failure();
+    }
+
+    #[test]
+    fn track_overlap() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:30")
+            .arg("-")
+            .arg("11:00")
+            .arg("bar")
             .assert()
             .failure();
     }
