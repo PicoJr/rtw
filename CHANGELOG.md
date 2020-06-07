@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.1](https://crates.io/crates/rtw/1.2.1) Jun 07, 2020
 
+* Add warning: CLI usage stable but not `lib.rs` content.
 * Fix doc.rs build issue (restore `lib.rs`).
 
 ## [1.2.0](https://crates.io/crates/rtw/1.2.0) Jun 07, 2020
