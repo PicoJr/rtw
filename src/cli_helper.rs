@@ -1,3 +1,4 @@
+//! CLI parsing helpers and clap App.
 use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::rtw_core::clock::{Clock, Time};

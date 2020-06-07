@@ -1,3 +1,4 @@
+//! Newtype on `chrono::Duration`
 use chrono::Duration;
 use std::fmt;
 use std::fmt::{Error, Formatter};

@@ -1,3 +1,4 @@
+//! Logic above an activity storage
 use crate::rtw_core::activity::{intersect, overlap, Activity, OngoingActivity};
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::service::ActivityService;

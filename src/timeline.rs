@@ -1,3 +1,4 @@
+//! Timeline display
 use crate::rtw_core::activity::Activity;
 use crate::rtw_core::durationw::DurationW;
 use crate::rtw_core::ActivityId;

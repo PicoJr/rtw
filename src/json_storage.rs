@@ -1,3 +1,4 @@
+//! Store activities (current, finished) as Json files.
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;

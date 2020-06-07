@@ -1,3 +1,4 @@
+//! Translate CLI args to calls to activity Service.
 use crate::cli_helper;
 use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
@@ -12,7 +13,10 @@ use clap::ArgMatches;
 
 type ActivityWithId = (ActivityId, Activity);
 
-pub(crate) enum RTWAction {
+/// Describe the action (side-effect) to be made
+///
+/// see `run`
+pub enum RTWAction {
     Cancel(Option<OngoingActivity>),
     Start(OngoingActivity),
     Track(Activity),
@@ -82,7 +86,10 @@ fn run_timeline(
     Ok(RTWAction::Timeline(activities))
 }
 
-pub(crate) fn run<S, Cl>(
+/// Translate CLI args to actions (mostly side-effect free)
+///
+/// It may fetch data from underlying activity storage but it should not write anything.
+pub fn run<S, Cl>(
     matches: ArgMatches,
     service: &mut Service<S>,
     clock: &Cl,
@@ -151,7 +158,8 @@ where
     }
 }
 
-pub(crate) fn run_action<S, Cl>(
+/// Effectively perform the action (side effect).
+pub fn run_action<S, Cl>(
     action: RTWAction,
     service: &mut Service<S>,
     clock: &Cl,

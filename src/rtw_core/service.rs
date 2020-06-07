@@ -1,3 +1,4 @@
+//! A service for activities: abstracts activities queries and modifications.
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::ActivityId;

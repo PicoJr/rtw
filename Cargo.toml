@@ -1,6 +1,6 @@
 [package]
 name = "rtw"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["PicoJr <picojr_dev@gmx.com>"]
 edition = "2018"
 repository = "https://github.com/PicoJr/rtw"

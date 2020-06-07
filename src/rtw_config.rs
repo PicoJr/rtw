@@ -1,3 +1,4 @@
+//! Config.
 extern crate config;
 
 use self::config::FileFormat;
