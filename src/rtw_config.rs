@@ -1,11 +1,22 @@
 extern crate config;
 
+use self::config::FileFormat;
+use serde::Deserialize;
+use serde::Serialize;
 use std::path::PathBuf;
-use std::str::FromStr;
 
-#[derive(Debug, Clone, PartialEq)]
+const DEFAULT_CONFIG: &str = r#"
+    {
+        "timeline_colors": [[183,28,28], [26,35,126], [0,77,64], [38,50,56]]
+    }
+"#;
+
+type RGB = (u8, u8, u8);
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RTWConfig {
     pub storage_dir_path: PathBuf,
+    pub timeline_colors: Vec<RGB>,
 }
 
 impl RTWConfig {
@@ -13,6 +24,7 @@ impl RTWConfig {
         let home_dir = dirs::home_dir().expect("could not find home dir");
         RTWConfig {
             storage_dir_path: home_dir, // stores finished activities
+            timeline_colors: vec![(183, 28, 28), (26, 35, 126), (0, 77, 64), (38, 50, 56)],
         }
     }
 }
@@ -24,17 +36,16 @@ fn load_config_from_config_dir(
     let mut settings = config::Config::default();
     let config_path = config_dir.join("rtw").join("rtw_config.json");
     let config_path_fallback = config_dir.join("rtw_config.json");
-    let settings = settings
+    settings
         .set_default(
             "storage_dir_path",
             default_config.storage_dir_path.to_str().unwrap(),
         )?
+        .merge(config::File::from_str(DEFAULT_CONFIG, FileFormat::Json))?
         .merge(config::File::with_name(config_path.to_str().unwrap()).required(false))?
         .merge(config::File::with_name(config_path_fallback.to_str().unwrap()).required(false))?;
-    let storage_dir_path = settings.get_str("storage_dir_path")?;
-    Ok(RTWConfig {
-        storage_dir_path: PathBuf::from_str(storage_dir_path.as_str())?,
-    })
+    let rtw_config: RTWConfig = settings.try_into()?;
+    Ok(rtw_config)
 }
 
 pub fn load_config() -> anyhow::Result<RTWConfig> {
@@ -53,6 +64,15 @@ mod tests {
     use std::path::PathBuf;
     use std::str::FromStr;
     use tempfile::tempdir;
+
+    #[test]
+    // make sure the config file in `example` folder is valid
+    fn example_config_valid() {
+        let example_config = PathBuf::from_str("example/rtw_config.json").unwrap();
+        let reader = File::open(example_config);
+        let config: serde_json::Result<RTWConfig> = serde_json::from_reader(reader.unwrap());
+        assert!(config.is_ok())
+    }
 
     #[test]
     fn test_config_not_found_in_config_dir() {

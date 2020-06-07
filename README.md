@@ -25,6 +25,8 @@ Supported OS: Linux, MacOS, Windows
 
 CI runs on `ubuntu-latest`, `macos-latest`, `windows-latest`.
 
+Note: Windows support is only experimental. Some features may not be supported on Windows.
+
 ### Cargo
 
 ```
@@ -102,6 +104,16 @@ Example output:
 read the doc 2019-12-25T11:49:30 2019-12-25T11:53:36 00:04:246
 eat cookies  2019-12-25T12:08:49 2019-12-25T12:12:14 00:03:204
 ```
+
+### Display a timeline for the day
+
+```bash
+rtw day
+```
+
+Example output (YMMV):
+
+![timeline](img/day.png)
 
 ### More?
 

@@ -1,7 +1,9 @@
 use clap::{App, Arg, ArgMatches, SubCommand};
 
+use crate::rtw_core::clock::{Clock, Time};
+use crate::rtw_core::datetimew::DateTimeW;
+use crate::rtw_core::{ActivityId, Tags};
 use crate::time_tools::TimeTools;
-use rtw::{ActivityId, Clock, DateTimeW, Tags, Time};
 use std::str::FromStr;
 
 pub struct ActivityCli {}
@@ -72,7 +74,7 @@ fn split_time_range(tokens: &[String], clock: &dyn Clock) -> anyhow::Result<(Tim
 impl ActivityCli {
     pub fn get_app(&self) -> App {
         App::new("RTW")
-            .version("1.1.0")
+            .version(crate_version!())
             .author("PicoJr")
             .about("rust time tracking CLI")
             .arg(
@@ -158,11 +160,30 @@ impl ActivityCli {
                     ),
             )
             .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
+            .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
+            .subcommand(
+                SubCommand::with_name("week").about("Display the current week as a timeline"),
+            )
+            .subcommand(
+                SubCommand::with_name("timeline")
+                    .about("Display finished activities timeline")
+                    .arg(
+                        Arg::with_name("tokens")
+                            .multiple(true)
+                            .required(false)
+                            .help(concat!(
+                                "optional interval time clue\n",
+                                "start - end\n",
+                                "e.g 'last monday - now' "
+                            )),
+                    ),
+            )
             .subcommand(
                 SubCommand::with_name("delete")
                     .about("Delete activity")
                     .arg(Arg::with_name("id").required(true).help("activity id")),
             )
+            .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
     }
 
     pub fn parse_start_args(
@@ -236,6 +257,28 @@ impl ActivityCli {
         Ok((range, display_id))
     }
 
+    pub fn parse_timeline_args(
+        timeline_m: &ArgMatches,
+        clock: &dyn Clock,
+    ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+        let display_id = timeline_m.is_present("id");
+        let values_arg = timeline_m.values_of("tokens");
+        if let Some(values) = values_arg {
+            let values: Vec<String> = values.map(String::from).collect();
+            let range_maybe = split_time_range(&values, clock);
+            match range_maybe {
+                Ok((range_start, range_end)) => {
+                    let range_start = clock.date_time(range_start);
+                    let range_end = clock.date_time(range_end);
+                    Ok(((range_start, range_end), display_id))
+                }
+                Err(e) => Err(anyhow::anyhow!(e)),
+            }
+        } else {
+            Ok((clock.today_range(), display_id))
+        }
+    }
+
     pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
         let id_opt = delete_m
             .value_of("id")
@@ -254,8 +297,9 @@ mod tests {
     use crate::cli_helper::{
         split_time_clue_from_tags, split_time_range, split_time_range_from_tags,
     };
+    use crate::rtw_core::clock::Time;
+    use crate::rtw_core::Tags;
     use crate::time_tools::TimeTools;
-    use rtw::{Tags, Time};
 
     #[test]
     // rtw start

@@ -1,5 +1,3 @@
-extern crate rtw;
-
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
@@ -89,6 +87,45 @@ mod tests {
     }
 
     #[test]
+    fn timeline_day_nothing() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("day")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn timeline_week_nothing() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("week")
+            .assert()
+            .success();
+    }
+
+    #[test]
+    fn timeline_nothing() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("timeline")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .assert()
+            .success();
+    }
+
+    #[test]
     fn continue_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -172,6 +209,27 @@ mod tests {
             .assert()
             .success()
             .stdout(predicates::str::contains("Recorded foo"));
+    }
+
+    #[test]
+    fn start_then_cancel() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Tracking foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("cancel")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Cancelled foo"));
     }
 
     #[test]
@@ -295,6 +353,33 @@ mod tests {
             .arg("track")
             .arg("-")
             .arg("foo")
+            .assert()
+            .failure();
+    }
+
+    #[test]
+    fn track_overlap() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:30")
+            .arg("-")
+            .arg("11:00")
+            .arg("bar")
             .assert()
             .failure();
     }

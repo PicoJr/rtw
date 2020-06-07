@@ -1,21 +1,22 @@
+#[macro_use]
 extern crate clap;
 
 use crate::chrono_clock::ChronoClock;
-use crate::json_current::JsonCurrentActivityRepository;
-use crate::json_finished::JsonFinishedActivityRepository;
-use crate::rtw_cli::RTW;
+use crate::json_storage::JsonStorage;
+use crate::rtw_cli::{run, run_action};
 use crate::service::Service;
 use std::path::PathBuf;
 use std::str::FromStr;
 
 mod chrono_clock;
 mod cli_helper;
-mod json_current;
-mod json_finished;
+mod json_storage;
 mod rtw_cli;
 mod rtw_config;
+mod rtw_core;
 mod service;
 mod time_tools;
+mod timeline;
 
 fn main() -> anyhow::Result<()> {
     let cli_helper = cli_helper::ActivityCli {};
@@ -24,16 +25,16 @@ fn main() -> anyhow::Result<()> {
     let app = cli_helper.get_app();
     let matches = app.get_matches();
     let storage_dir = match matches.value_of("directory") {
-        None => config.storage_dir_path,
+        None => config.storage_dir_path.clone(),
         Some(dir_str) => PathBuf::from_str(dir_str).expect("invalid directory"),
     };
     let current_activity_path = storage_dir.join(".rtw.json");
     let finished_activity_path = storage_dir.join(".rtwh.json");
-    let service = Service::new(
-        JsonFinishedActivityRepository::new(finished_activity_path),
-        JsonCurrentActivityRepository::new(current_activity_path),
-    );
+    let mut service = Service::new(JsonStorage::new(
+        current_activity_path,
+        finished_activity_path,
+    ));
 
-    let mut rtw_cli = RTW::new(clock, service);
-    rtw_cli.run(matches)
+    let action = run(matches, &mut service, &clock)?;
+    run_action(action, &mut service, &clock, &config)
 }

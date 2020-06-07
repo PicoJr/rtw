@@ -10,12 +10,17 @@
          * [Stop current activity now](#stop-current-activity-now)
          * [Stop current activity 4 minutes ago](#stop-current-activity-4-minutes-ago)
          * [Stop current activity at a specific time](#stop-current-activity-at-a-specific-time)
+      * [Cancel current activity](#cancel-current-activity)
       * [Display Summary](#display-summary)
          * [Display finished activities summary for today](#display-finished-activities-summary-for-today)
          * [Display finished activities summary for yesterday](#display-finished-activities-summary-for-yesterday)
          * [Display finished activities summary for last week](#display-finished-activities-summary-for-last-week)
          * [Display finished activities summary for range](#display-finished-activities-summary-for-range)
          * [Display finished activities id](#display-finished-activities-id)
+      * [Display a timeline](#display-a-timeline)
+         * [For the day](#for-the-day)
+         * [For the week](#for-the-week)
+         * [For a time range](#for-a-time-range)
       * [Continue Activity](#continue-activity)
          * [Continue last finished activity](#continue-last-finished-activity)
       * [Delete Activity](#delete-activity)
@@ -115,6 +120,20 @@ Ended   2019-12-25T19:45:00
 Total   00:02:00
 ```
 
+## Cancel current activity
+
+Example:
+```
+rtw cancel
+```
+
+Example output:
+```
+Cancelled write doc
+Started   2019-12-24T19:43:00
+Total     00:20:05
+```
+
 ## Display Summary
 
 ### Display finished activities summary for today
@@ -180,6 +199,32 @@ Example output:
 ```
 
 > id 0 = last finished activity
+
+## Display a timeline
+
+:warning: does not work if some activities are overlapping.
+
+### For the day
+
+```bash
+rtw day
+```
+
+Example output (YMMV):
+
+![timeline](img/day.png)
+
+### For the week
+
+```bash
+rtw week
+```
+
+### For a time range
+
+```bash
+rtw timeline last monday - now
+```
 
 ## Continue Activity
 
