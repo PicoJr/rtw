@@ -11,6 +11,8 @@
 
 Command-line interface (CLI) time tracker.
 
+CLI usage is stable, underlying API is **not stable**.
+
 This project is heavily inspired from [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
 
 > For a stable feature-rich CLI time tracker, please use Timewarrior: https://timewarrior.net/.

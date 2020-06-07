@@ -1,3 +1,5 @@
+//! Clock abstraction
+
 use crate::rtw_core::datetimew::DateTimeW;
 
 /// Time (absolute or relative)

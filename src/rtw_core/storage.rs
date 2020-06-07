@@ -1,3 +1,4 @@
+//! Storage: abstracts activities storage (file, memory...)
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::ActivityId;
 use std::error::Error;

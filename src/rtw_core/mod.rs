@@ -1,3 +1,4 @@
+//! Core traits and data structures.
 pub mod activity;
 pub mod clock;
 pub mod datetimew;

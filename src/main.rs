@@ -1,22 +1,10 @@
-#[macro_use]
-extern crate clap;
-
-use crate::chrono_clock::ChronoClock;
-use crate::json_storage::JsonStorage;
-use crate::rtw_cli::{run, run_action};
-use crate::service::Service;
+use rtw::chrono_clock::ChronoClock;
+use rtw::json_storage::JsonStorage;
+use rtw::rtw_cli::{run, run_action};
+use rtw::service::Service;
+use rtw::{cli_helper, rtw_config};
 use std::path::PathBuf;
 use std::str::FromStr;
-
-mod chrono_clock;
-mod cli_helper;
-mod json_storage;
-mod rtw_cli;
-mod rtw_config;
-mod rtw_core;
-mod service;
-mod time_tools;
-mod timeline;
 
 fn main() -> anyhow::Result<()> {
     let cli_helper = cli_helper::ActivityCli {};
@@ -36,5 +24,6 @@ fn main() -> anyhow::Result<()> {
     ));
 
     let action = run(matches, &mut service, &clock)?;
+    // skipping this should be the same as a dry-run.
     run_action(action, &mut service, &clock, &config)
 }

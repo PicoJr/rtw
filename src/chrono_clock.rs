@@ -1,3 +1,4 @@
+//! Clock impl using chrono.
 use crate::rtw_core::clock::{Clock, Time};
 use crate::rtw_core::datetimew::DateTimeW;
 use chrono::{Date, Datelike, Duration, Local};

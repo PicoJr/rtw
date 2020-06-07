@@ -1,3 +1,5 @@
+//! Activity and OngoingActivity
+
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::durationw::DurationW;
 use crate::rtw_core::Tags;
@@ -93,6 +95,9 @@ impl OngoingActivity {
     }
 }
 
+/// Check intersection between a finished activity and a date
+///
+/// Returns Some(activity) if it intersects else None.
 pub fn intersect(finished: &Activity, datetimew: &DateTimeW) -> Option<Activity> {
     if (&finished.start_time < datetimew) && (datetimew < &finished.stop_time) {
         Some(finished.clone())
@@ -101,6 +106,9 @@ pub fn intersect(finished: &Activity, datetimew: &DateTimeW) -> Option<Activity>
     }
 }
 
+/// Check overlap between 2 finished activities
+///
+/// Returns Some(first) if first activity overlaps with the second else None.
 pub fn overlap(finished: &Activity, other: &Activity) -> Option<Activity> {
     if finished < other {
         intersect(finished, &other.start_time)
