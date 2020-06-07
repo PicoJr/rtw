@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate clap;
 
 use crate::chrono_clock::ChronoClock;
