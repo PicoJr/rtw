@@ -1,3 +1,4 @@
+//! Time parsing utils.
 use crate::rtw_core::clock::{Clock, Time};
 use anyhow::anyhow;
 use chrono::Local;

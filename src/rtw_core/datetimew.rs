@@ -1,3 +1,4 @@
+//! Newtype on `chrono::Date<Local>`
 use crate::rtw_core::durationw::DurationW;
 use crate::rtw_core::DATETIME_FMT;
 use chrono::{DateTime, Local};
