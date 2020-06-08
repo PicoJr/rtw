@@ -38,7 +38,6 @@ fn main() -> anyhow::Result<()> {
 
     let action = run(&matches, &clock)?;
     let mutation = dry_run_action(action, &service, &clock, &config)?;
-    // skipping this should be the same as a dry-run.
     if matches.is_present("dry-run") {
         println!("(dry-run) nothing done");
         Ok(())
