@@ -84,6 +84,13 @@ pub fn get_app() -> App<'static, 'static> {
                 .help("custom directory")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("dry-run")
+                .short("n")
+                .long("dry")
+                .required(false)
+                .help("dry run don't write anything to the filesystem"),
+        )
         .subcommand(
             SubCommand::with_name("start")
                 .about("Start new activity")

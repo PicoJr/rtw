@@ -4,7 +4,7 @@ extern crate clap;
 use crate::chrono_clock::ChronoClock;
 use crate::cli_helper::get_app;
 use crate::json_storage::JsonStorage;
-use crate::rtw_cli::{run, run_action};
+use crate::rtw_cli::{dry_run_action, run, run_mutation};
 use crate::rtw_config::load_config;
 use crate::service::Service;
 use std::path::PathBuf;
@@ -36,7 +36,13 @@ fn main() -> anyhow::Result<()> {
         finished_activity_path,
     ));
 
-    let action = run(matches, &mut service, &clock)?;
+    let action = run(&matches, &clock)?;
+    let mutation = dry_run_action(action, &service, &clock, &config)?;
     // skipping this should be the same as a dry-run.
-    run_action(action, &mut service, &clock, &config)
+    if matches.is_present("dry-run") {
+        println!("(dry-run) nothing done");
+        Ok(())
+    } else {
+        run_mutation(mutation, &mut service)
+    }
 }

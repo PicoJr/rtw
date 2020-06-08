@@ -14,7 +14,3 @@
 //! * An `ActivityService` provides the logic above a storage.
 //! * `rtw_cli::run` translates CLI args to actions (`RTWAction`).
 //! * `rtw_cli::run_action` performs actions `RTWAction` by calling the service.
-//!
-//! ## Tests
-//!
-//! RTW has both unit and integration tests.
