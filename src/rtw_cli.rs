@@ -100,24 +100,24 @@ where
 {
     match matches.subcommand() {
         ("start", Some(sub_m)) => {
-            let (start_time, tags) = cli_helper::ActivityCli::parse_start_args(sub_m, clock)?;
+            let (start_time, tags) = cli_helper::parse_start_args(sub_m, clock)?;
             let abs_start_time = clock.date_time(start_time);
             run_start(abs_start_time, tags)
         }
         ("stop", Some(sub_m)) => {
-            let stop_time = cli_helper::ActivityCli::parse_stop_args(sub_m, clock)?;
+            let stop_time = cli_helper::parse_stop_args(sub_m, clock)?;
             let abs_stop_time = clock.date_time(stop_time);
             run_stop(abs_stop_time)
         }
         ("summary", Some(sub_m)) => {
             let ((range_start, range_end), display_id) =
-                cli_helper::ActivityCli::parse_summary_args(sub_m, clock)?;
+                cli_helper::parse_summary_args(sub_m, clock)?;
             let activities = service.get_finished_activities()?;
             run_summary(range_start, range_end, display_id, &activities)
         }
         ("timeline", Some(sub_m)) => {
             let ((range_start, range_end), display_id) =
-                cli_helper::ActivityCli::parse_timeline_args(sub_m, clock)?;
+                cli_helper::parse_timeline_args(sub_m, clock)?;
             let activities = service.get_finished_activities()?;
             run_timeline(range_start, range_end, display_id, &activities)
         }
@@ -126,12 +126,11 @@ where
             run_continue(&activities)
         }
         ("delete", Some(sub_m)) => {
-            let id = cli_helper::ActivityCli::parse_delete_args(sub_m)?;
+            let id = cli_helper::parse_delete_args(sub_m)?;
             run_delete(id)
         }
         ("track", Some(sub_m)) => {
-            let (start_time, stop_time, tags) =
-                cli_helper::ActivityCli::parse_track_args(sub_m, clock)?;
+            let (start_time, stop_time, tags) = cli_helper::parse_track_args(sub_m, clock)?;
             let start_time = clock.date_time(start_time);
             let stop_time = clock.date_time(stop_time);
             run_track(start_time, stop_time, tags)

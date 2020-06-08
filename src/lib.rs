@@ -18,16 +18,3 @@
 //! ## Tests
 //!
 //! RTW has both unit and integration tests.
-
-#[macro_use]
-extern crate clap;
-
-pub mod chrono_clock;
-pub mod cli_helper;
-pub mod json_storage;
-pub mod rtw_cli;
-pub mod rtw_config;
-pub mod rtw_core;
-pub mod service;
-pub mod time_tools;
-mod timeline;
