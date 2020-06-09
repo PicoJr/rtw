@@ -81,7 +81,8 @@ pub fn get_app() -> App<'static, 'static> {
                 .long("dir")
                 .value_name("DIR")
                 .required(false)
-                .help("custom directory")
+                .help("storage directory")
+                .hidden(true) // only useful for testing
                 .takes_value(true),
         )
         .arg(
@@ -89,7 +90,7 @@ pub fn get_app() -> App<'static, 'static> {
                 .short("n")
                 .long("dry")
                 .required(false)
-                .help("dry run don't write anything to the filesystem"),
+                .help("dry run: don't write anything to the filesystem"),
         )
         .subcommand(
             SubCommand::with_name("start")
@@ -169,7 +170,7 @@ pub fn get_app() -> App<'static, 'static> {
         .subcommand(SubCommand::with_name("week").about("Display the current week as a timeline"))
         .subcommand(
             SubCommand::with_name("timeline")
-                .about("Display finished activities timeline")
+                .about("Display finished activities as a timeline")
                 .arg(
                     Arg::with_name("tokens")
                         .multiple(true)
