@@ -7,8 +7,6 @@ use crate::rtw_core::{ActivityId, Tags};
 use crate::time_tools::TimeTools;
 use std::str::FromStr;
 
-pub struct ActivityCli {}
-
 // 09:00 foo -> (09:00, foo)
 // foo -> (Now, foo)
 // last friday 8pm foo -> (last friday 8pm, foo)
@@ -72,223 +70,224 @@ fn split_time_range(tokens: &[String], clock: &dyn Clock) -> anyhow::Result<(Tim
     }
 }
 
-impl ActivityCli {
-    pub fn get_app(&self) -> App {
-        App::new("RTW")
-            .version(crate_version!())
-            .author("PicoJr")
-            .about("rust time tracking CLI")
-            .arg(
-                Arg::with_name("directory")
-                    .short("d")
-                    .long("dir")
-                    .value_name("DIR")
+pub fn get_app() -> App<'static, 'static> {
+    App::new("RTW")
+        .version(crate_version!())
+        .author("PicoJr")
+        .about("rust time tracking CLI")
+        .arg(
+            Arg::with_name("directory")
+                .short("d")
+                .long("dir")
+                .value_name("DIR")
+                .required(false)
+                .help("storage directory")
+                .hidden(true) // only useful for testing
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("dry-run")
+                .short("n")
+                .long("dry")
+                .required(false)
+                .help("dry run: don't write anything to the filesystem"),
+        )
+        .subcommand(
+            SubCommand::with_name("start")
+                .about("Start new activity")
+                .arg(
+                    Arg::with_name("tokens")
+                        .multiple(true)
+                        .required(true)
+                        .help(concat!(
+                            "optional time clue followed by at least 1 tag\n",
+                            "e.g '4 min ago foo' or '09:00 foo' or 'foo' "
+                        )),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("track")
+                .about("Track a finished activity")
+                .arg(
+                    Arg::with_name("tokens")
+                        .multiple(true)
+                        .required(true)
+                        .help(concat!(
+                            "interval time clue followed by at least 1 tag\n",
+                            "start - end tags...\n",
+                            "e.g '09:00 - 10:00 foo' "
+                        )),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("stop").about("Stop activity").arg(
+                Arg::with_name("time")
+                    .multiple(true)
                     .required(false)
-                    .help("custom directory")
-                    .takes_value(true),
-            )
-            .subcommand(
-                SubCommand::with_name("start")
-                    .about("Start new activity")
-                    .arg(
-                        Arg::with_name("tokens")
-                            .multiple(true)
-                            .required(true)
-                            .help(concat!(
-                                "optional time clue followed by at least 1 tag\n",
-                                "e.g '4 min ago foo' or '09:00 foo' or 'foo' "
-                            )),
-                    ),
-            )
-            .subcommand(
-                SubCommand::with_name("track")
-                    .about("Track a finished activity")
-                    .arg(
-                        Arg::with_name("tokens")
-                            .multiple(true)
-                            .required(true)
-                            .help(concat!(
-                                "interval time clue followed by at least 1 tag\n",
-                                "start - end tags...\n",
-                                "e.g '09:00 - 10:00 foo' "
-                            )),
-                    ),
-            )
-            .subcommand(
-                SubCommand::with_name("stop").about("Stop activity").arg(
-                    Arg::with_name("time")
+                    .help(concat!(
+                        "optional time clue e.g. 4min ago\n",
+                        "current time is used when omitted"
+                    )),
+            ),
+        )
+        .subcommand(
+            SubCommand::with_name("summary")
+                .about("Display finished activities")
+                .arg(
+                    Arg::with_name("tokens")
+                        .multiple(true)
+                        .required(false)
+                        .conflicts_with_all(&["yesterday", "lastweek", "week"])
+                        .help(concat!(
+                            "optional interval time clue\n",
+                            "start - end\n",
+                            "e.g '09:00 - 10:00' "
+                        )),
+                )
+                .arg(
+                    Arg::with_name("yesterday")
+                        .long("yesterday")
+                        .help("activities done yesterday"),
+                )
+                .arg(
+                    Arg::with_name("lastweek")
+                        .long("lastweek")
+                        .help("activities done last week"),
+                )
+                .arg(
+                    Arg::with_name("week")
+                        .long("week")
+                        .help("activities done this week"),
+                )
+                .arg(
+                    Arg::with_name("id")
+                        .long("id")
+                        .help("display activities id"),
+                ),
+        )
+        .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
+        .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
+        .subcommand(SubCommand::with_name("week").about("Display the current week as a timeline"))
+        .subcommand(
+            SubCommand::with_name("timeline")
+                .about("Display finished activities as a timeline")
+                .arg(
+                    Arg::with_name("tokens")
                         .multiple(true)
                         .required(false)
                         .help(concat!(
-                            "optional time clue e.g. 4min ago\n",
-                            "current time is used when omitted"
+                            "optional interval time clue\n",
+                            "start - end\n",
+                            "e.g 'last monday - now' "
                         )),
                 ),
-            )
-            .subcommand(
-                SubCommand::with_name("summary")
-                    .about("Display finished activities")
-                    .arg(
-                        Arg::with_name("tokens")
-                            .multiple(true)
-                            .required(false)
-                            .conflicts_with_all(&["yesterday", "lastweek", "week"])
-                            .help(concat!(
-                                "optional interval time clue\n",
-                                "start - end\n",
-                                "e.g '09:00 - 10:00' "
-                            )),
-                    )
-                    .arg(
-                        Arg::with_name("yesterday")
-                            .long("yesterday")
-                            .help("activities done yesterday"),
-                    )
-                    .arg(
-                        Arg::with_name("lastweek")
-                            .long("lastweek")
-                            .help("activities done last week"),
-                    )
-                    .arg(
-                        Arg::with_name("week")
-                            .long("week")
-                            .help("activities done this week"),
-                    )
-                    .arg(
-                        Arg::with_name("id")
-                            .long("id")
-                            .help("display activities id"),
-                    ),
-            )
-            .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
-            .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
-            .subcommand(
-                SubCommand::with_name("week").about("Display the current week as a timeline"),
-            )
-            .subcommand(
-                SubCommand::with_name("timeline")
-                    .about("Display finished activities timeline")
-                    .arg(
-                        Arg::with_name("tokens")
-                            .multiple(true)
-                            .required(false)
-                            .help(concat!(
-                                "optional interval time clue\n",
-                                "start - end\n",
-                                "e.g 'last monday - now' "
-                            )),
-                    ),
-            )
-            .subcommand(
-                SubCommand::with_name("delete")
-                    .about("Delete activity")
-                    .arg(Arg::with_name("id").required(true).help("activity id")),
-            )
-            .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
-    }
+        )
+        .subcommand(
+            SubCommand::with_name("delete")
+                .about("Delete activity")
+                .arg(Arg::with_name("id").required(true).help("activity id")),
+        )
+        .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
+}
 
-    pub fn parse_start_args(
-        start_m: &ArgMatches,
-        clock: &dyn Clock,
-    ) -> anyhow::Result<(Time, Tags)> {
-        let values_arg = start_m.values_of("tokens"); // optional time clue, tags
-        if let Some(values) = values_arg {
-            let values: Tags = values.map(String::from).collect();
-            let (time, tags) = split_time_clue_from_tags(&values, clock);
-            return if tags.is_empty() {
-                Err(anyhow::anyhow!("no tags provided"))
-            } else {
-                Ok((time, tags))
-            };
-        }
-        Err(anyhow::anyhow!("neither time clue nor tags provided")) // it should be prevented by clap
-    }
-
-    pub fn parse_track_args(
-        track_m: &ArgMatches,
-        clock: &dyn Clock,
-    ) -> anyhow::Result<(Time, Time, Tags)> {
-        let values_arg = track_m
-            .values_of("tokens")
-            .expect("start time, end time and at least 1 tag required");
-        let values: Tags = values_arg.map(String::from).collect();
-        split_time_range_from_tags(&values, clock)
-    }
-
-    pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
-        let time_arg = stop_m.values_of("time");
-        if let Some(values) = time_arg {
-            let values: Vec<String> = values.map(String::from).collect();
-            let time_str = values.join(" ");
-            TimeTools::time_from_str(&time_str, clock)
+pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Tags)> {
+    let values_arg = start_m.values_of("tokens"); // optional time clue, tags
+    if let Some(values) = values_arg {
+        let values: Tags = values.map(String::from).collect();
+        let (time, tags) = split_time_clue_from_tags(&values, clock);
+        return if tags.is_empty() {
+            Err(anyhow::anyhow!("no tags provided"))
         } else {
-            Ok(Time::Now)
-        }
-    }
-
-    pub fn parse_summary_args(
-        summary_m: &ArgMatches,
-        clock: &dyn Clock,
-    ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
-        let display_id = summary_m.is_present("id");
-        let values_arg = summary_m.values_of("tokens");
-        if let Some(values) = values_arg {
-            let values: Vec<String> = values.map(String::from).collect();
-            let range_maybe = split_time_range(&values, clock);
-            return match range_maybe {
-                Ok((range_start, range_end)) => {
-                    let range_start = clock.date_time(range_start);
-                    let range_end = clock.date_time(range_end);
-                    Ok(((range_start, range_end), display_id))
-                }
-                Err(e) => Err(anyhow::anyhow!(e)),
-            };
-        }
-        let range = {
-            if summary_m.is_present("yesterday") {
-                clock.yesterday_range()
-            } else if summary_m.is_present("lastweek") {
-                clock.last_week_range()
-            } else if summary_m.is_present("week") {
-                clock.this_week_range()
-            } else {
-                clock.today_range()
-            }
+            Ok((time, tags))
         };
-        Ok((range, display_id))
     }
+    Err(anyhow::anyhow!("neither time clue nor tags provided")) // it should be prevented by clap
+}
 
-    pub fn parse_timeline_args(
-        timeline_m: &ArgMatches,
-        clock: &dyn Clock,
-    ) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
-        let display_id = timeline_m.is_present("id");
-        let values_arg = timeline_m.values_of("tokens");
-        if let Some(values) = values_arg {
-            let values: Vec<String> = values.map(String::from).collect();
-            let range_maybe = split_time_range(&values, clock);
-            match range_maybe {
-                Ok((range_start, range_end)) => {
-                    let range_start = clock.date_time(range_start);
-                    let range_end = clock.date_time(range_end);
-                    Ok(((range_start, range_end), display_id))
-                }
-                Err(e) => Err(anyhow::anyhow!(e)),
+pub fn parse_track_args(
+    track_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Time, Tags)> {
+    let values_arg = track_m
+        .values_of("tokens")
+        .expect("start time, end time and at least 1 tag required");
+    let values: Tags = values_arg.map(String::from).collect();
+    split_time_range_from_tags(&values, clock)
+}
+
+pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
+    let time_arg = stop_m.values_of("time");
+    if let Some(values) = time_arg {
+        let values: Vec<String> = values.map(String::from).collect();
+        let time_str = values.join(" ");
+        TimeTools::time_from_str(&time_str, clock)
+    } else {
+        Ok(Time::Now)
+    }
+}
+
+pub fn parse_summary_args(
+    summary_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+    let display_id = summary_m.is_present("id");
+    let values_arg = summary_m.values_of("tokens");
+    if let Some(values) = values_arg {
+        let values: Vec<String> = values.map(String::from).collect();
+        let range_maybe = split_time_range(&values, clock);
+        return match range_maybe {
+            Ok((range_start, range_end)) => {
+                let range_start = clock.date_time(range_start);
+                let range_end = clock.date_time(range_end);
+                Ok(((range_start, range_end), display_id))
             }
-        } else {
-            Ok((clock.today_range(), display_id))
-        }
+            Err(e) => Err(anyhow::anyhow!(e)),
+        };
     }
-
-    pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
-        let id_opt = delete_m
-            .value_of("id")
-            .map(|id_str| usize::from_str(id_str));
-        if let Some(Ok(id)) = id_opt {
-            Ok(id)
+    let range = {
+        if summary_m.is_present("yesterday") {
+            clock.yesterday_range()
+        } else if summary_m.is_present("lastweek") {
+            clock.last_week_range()
+        } else if summary_m.is_present("week") {
+            clock.this_week_range()
         } else {
-            Err(anyhow::anyhow!("could not parse id"))
+            clock.today_range()
         }
+    };
+    Ok((range, display_id))
+}
+
+pub fn parse_timeline_args(
+    timeline_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+    let display_id = timeline_m.is_present("id");
+    let values_arg = timeline_m.values_of("tokens");
+    if let Some(values) = values_arg {
+        let values: Vec<String> = values.map(String::from).collect();
+        let range_maybe = split_time_range(&values, clock);
+        match range_maybe {
+            Ok((range_start, range_end)) => {
+                let range_start = clock.date_time(range_start);
+                let range_end = clock.date_time(range_end);
+                Ok(((range_start, range_end), display_id))
+            }
+            Err(e) => Err(anyhow::anyhow!(e)),
+        }
+    } else {
+        Ok((clock.today_range(), display_id))
+    }
+}
+
+pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
+    let id_opt = delete_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str));
+    if let Some(Ok(id)) = id_opt {
+        Ok(id)
+    } else {
+        Err(anyhow::anyhow!("could not parse id"))
     }
 }
 
