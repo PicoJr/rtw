@@ -6,7 +6,8 @@ use ansi_term::{Color, Style};
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Duration, Local, Timelike};
 use std::cmp::max;
-use tbl::{Block, BlockRenderer, Bound, RenderBlock, Renderer, TBLError};
+use std::iter::FromIterator;
+use tbl::{Block, Bound, RenderBlock, Renderer, TBLError};
 
 type RGB = (u8, u8, u8);
 type Label = (String, RGB);
@@ -14,24 +15,30 @@ type Interval = (ActivityId, Activity);
 
 const DEFAULT_TERMINAL_SIZE: usize = 90;
 
-struct ActivityRenderer {}
+fn chunkify(s: &str, size: usize) -> Vec<String> {
+    let inter: Vec<char> = s.chars().collect();
+    let chunks = inter.chunks_exact(size);
+    let remainder = chunks.remainder().to_vec();
+    let padding: Vec<char> = std::iter::repeat(' ')
+        .take(size - remainder.len())
+        .collect();
+    let padded_remainder: Vec<char> = remainder.iter().chain(padding.iter()).cloned().collect();
+    let chunks: Vec<String> = chunks
+        .chain(std::iter::once(padded_remainder.as_slice()))
+        .map(|s| String::from_iter(s.iter()))
+        .collect();
+    chunks
+}
 
-impl BlockRenderer<Label> for ActivityRenderer {
-    fn render(&self, b: &Block<(String, (u8, u8, u8))>) -> RenderBlock {
-        match b {
-            Block::Space(size) => RenderBlock::Space(" ".repeat(*size)),
-            Block::Segment(size, label) => {
-                let (label, (r, g, b)) = label.clone().unwrap_or((String::default(), (0, 0, 0)));
-                let mut truncated = label;
-                truncated.truncate(*size);
-                let left = size - truncated.len();
-                let style = Style::new().on(Color::RGB(r, g, b));
-                RenderBlock::Block(
-                    style
-                        .paint(format!("{}{}", truncated, " ".repeat(left),))
-                        .to_string(),
-                )
-            }
+fn render(b: &Block<(String, (u8, u8, u8))>) -> RenderBlock {
+    match b {
+        Block::Space(size) => RenderBlock::Space(" ".repeat(*size)),
+        Block::Segment(size, label) => {
+            let (label, (r, g, b)) = label.clone().unwrap_or((String::default(), (0, 0, 0)));
+            let chunks = chunkify(&label, *size);
+            let style = Style::new().on(Color::RGB(r, g, b));
+            let color_chunks = chunks.iter().map(|s| style.paint(s).to_string()).collect();
+            RenderBlock::MultiLineBlock(color_chunks)
         }
     }
 }
@@ -154,7 +161,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
         let right_padding = total_string.len() + 1; // +1 space
         let available_length = max(0, width - right_padding as usize) as usize;
         let legend = Renderer::new(day_activities.as_slice(), &bounds, &legend)
-            .with_renderer(&ActivityRenderer {})
+            .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
@@ -164,9 +171,15 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping"
                 )),
             })?;
-        rendered.push(format!("{}{:>8}", legend, day_month));
+        for (i, line) in legend.iter().enumerate() {
+            if i == 0 {
+                rendered.push(format!("{}{:>8}", line, day_month));
+            } else {
+                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+            }
+        }
         let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
-            .with_renderer(&ActivityRenderer {})
+            .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
@@ -176,7 +189,13 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping"
                 )),
             })?;
-        rendered.push(format!("{}{}", timeline, total_string));
+        for (i, line) in timeline.iter().enumerate() {
+            if i == 0 {
+                rendered.push(format!("{}{}", line, total_string));
+            } else {
+                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+            }
+        }
     }
     Ok(rendered)
 }
