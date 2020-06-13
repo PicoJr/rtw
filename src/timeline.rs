@@ -15,7 +15,7 @@ type Interval = (ActivityId, Activity);
 
 const DEFAULT_TERMINAL_SIZE: usize = 90;
 
-fn chunkify(s: &String, size: usize) -> Vec<String> {
+fn chunkify(s: &str, size: usize) -> Vec<String> {
     let inter: Vec<char> = s.chars().collect();
     let chunks = inter.chunks_exact(size);
     let remainder = chunks.remainder().to_vec();
