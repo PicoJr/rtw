@@ -165,6 +165,42 @@ pub fn get_app() -> App<'static, 'static> {
                         .help("display activities id"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("dump")
+                .about("Dump finished activities to stdout in iCalendar format")
+                .after_help(concat!(
+                    "examples:\n",
+                    "rtw dump > today.ics\n",
+                    "rtw dump --lastweek > lastweek.ics\n",
+                    "rtw dump last friday - now > recent.ics\n"
+                ))
+                .arg(
+                    Arg::with_name("tokens")
+                        .multiple(true)
+                        .required(false)
+                        .conflicts_with_all(&["yesterday", "lastweek", "week"])
+                        .help(concat!(
+                            "optional interval time clue\n",
+                            "start - end\n",
+                            "e.g '09:00 - 10:00' "
+                        )),
+                )
+                .arg(
+                    Arg::with_name("yesterday")
+                        .long("yesterday")
+                        .help("activities done yesterday"),
+                )
+                .arg(
+                    Arg::with_name("lastweek")
+                        .long("lastweek")
+                        .help("activities done last week"),
+                )
+                .arg(
+                    Arg::with_name("week")
+                        .long("week")
+                        .help("activities done this week"),
+                ),
+        )
         .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
         .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
         .subcommand(SubCommand::with_name("week").about("Display the current week as a timeline"))
