@@ -12,7 +12,6 @@ use crate::rtw_core::Tags;
 use crate::service::Service;
 use crate::timeline::render_days;
 use clap::ArgMatches;
-use icalendar::Calendar;
 
 type ActivityWithId = (ActivityId, Activity);
 
@@ -33,7 +32,6 @@ pub enum RTWAction {
 }
 
 pub enum RTWMutation {
-    DumpICal(Calendar),
     Start(OngoingActivity),
     Track(Activity),
     Stop(DateTimeW),
@@ -261,7 +259,8 @@ where
                 .cloned()
                 .collect();
             let calendar = export_activities_to_ical(activities.as_slice());
-            Ok(RTWMutation::DumpICal(calendar))
+            println!("{}", calendar);
+            Ok(RTWMutation::Pure)
         }
     }
 }
@@ -290,10 +289,6 @@ where
         }
         RTWMutation::CancelCurrent => {
             let _cancelled = service.cancel_current_activity()?;
-            Ok(())
-        }
-        RTWMutation::DumpICal(calendar) => {
-            println!("{}", calendar);
             Ok(())
         }
         RTWMutation::Pure => {
