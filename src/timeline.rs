@@ -16,18 +16,22 @@ type Interval = (ActivityId, Activity);
 const DEFAULT_TERMINAL_SIZE: usize = 90;
 
 fn chunkify(s: &str, size: usize) -> Vec<String> {
-    let inter: Vec<char> = s.chars().collect();
-    let chunks = inter.chunks_exact(size);
-    let remainder = chunks.remainder().to_vec();
-    let padding: Vec<char> = std::iter::repeat(' ')
-        .take(size - remainder.len())
-        .collect();
-    let padded_remainder: Vec<char> = remainder.iter().chain(padding.iter()).cloned().collect();
-    let chunks: Vec<String> = chunks
-        .chain(std::iter::once(padded_remainder.as_slice()))
-        .map(|s| String::from_iter(s.iter()))
-        .collect();
-    chunks
+    if size == 0 {
+        vec![]
+    } else {
+        let inter: Vec<char> = s.chars().collect();
+        let chunks = inter.chunks_exact(size);
+        let remainder = chunks.remainder().to_vec();
+        let padding: Vec<char> = std::iter::repeat(' ')
+            .take(size - remainder.len())
+            .collect();
+        let padded_remainder: Vec<char> = remainder.iter().chain(padding.iter()).cloned().collect();
+        let chunks: Vec<String> = chunks
+            .chain(std::iter::once(padded_remainder.as_slice()))
+            .map(|s| String::from_iter(s.iter()))
+            .collect();
+        chunks
+    }
 }
 
 fn render(b: &Block<(String, (u8, u8, u8))>) -> RenderBlock {
