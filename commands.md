@@ -21,6 +21,10 @@
          * [For the day](#for-the-day)
          * [For the week](#for-the-week)
          * [For a time range](#for-a-time-range)
+      * [Export Finished Activities to iCalendar](#export-finished-activities-to-icalendar)
+         * [For today](#for-today)
+         * [For last week](#for-last-week)
+         * [For a given date range](#for-a-given-date-range)
       * [Continue Activity](#continue-activity)
          * [Continue last finished activity](#continue-last-finished-activity)
       * [Delete Activity](#delete-activity)
@@ -225,6 +229,51 @@ rtw week
 ```bash
 rtw timeline last monday - now
 ```
+
+## Export Finished Activities to iCalendar
+
+### For today
+
+Example:
+```
+rtw dump
+```
+
+Example output:
+```
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:ICALENDAR-RS
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+DTSTAMP:20200616T184116Z
+DTEND:20200616T203000
+DTSTART:20200616T160000
+SUMMARY:build a spaceship
+UID:3bc8b3b6-d17b-4e1d-8323-2f55bfb14792
+END:VEVENT
+END:VCALENDAR
+```
+
+Dump to ics file: `rtw dump > today.ics`
+
+### For last week
+
+Example:
+```
+rtw dump lastweek
+```
+
+Dump to ics file: `rtw dump --lastweek > lastweek.ics`
+
+### For a given date range
+
+Example:
+```
+rtw dump last monday - now
+```
+
+Dump to ics file: `rtw dump last monday - now > lastweek.ics`
 
 ## Continue Activity
 
