@@ -1,5 +1,6 @@
 //! Translate CLI args to calls to activity Service.
 use crate::cli_helper;
+use crate::ical_export::export_activities_to_ical;
 use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
@@ -23,6 +24,7 @@ pub enum RTWAction {
     Track((DateTimeW, DateTimeW), Tags),
     Stop(DateTimeW),
     Summary((DateTimeW, DateTimeW), bool),
+    DumpICal((DateTimeW, DateTimeW)),
     Continue,
     Delete(ActivityId),
     DisplayCurrent,
@@ -85,9 +87,11 @@ where
             let (range_start, range_end) = clock.this_week_range();
             Ok(RTWAction::Timeline((range_start, range_end)))
         }
-        ("cancel", Some(_sub_m)) => {
-            Ok(RTWAction::CancelCurrent)
-            // Ok(RTWAction::Cancel(current))
+        ("cancel", Some(_sub_m)) => Ok(RTWAction::CancelCurrent),
+        ("dump", Some(sub_m)) => {
+            let ((range_start, range_end), _display_id) =
+                cli_helper::parse_summary_args(sub_m, clock)?;
+            Ok(RTWAction::DumpICal((range_start, range_end)))
         }
         // default case: display current activity
         _ => Ok(RTWAction::DisplayCurrent),
@@ -245,6 +249,18 @@ where
                     Ok(RTWMutation::Pure)
                 }
             }
+        }
+        RTWAction::DumpICal((range_start, range_end)) => {
+            let activities = service.get_finished_activities()?;
+            let activities: Vec<Activity> = activities
+                .iter()
+                .map(|(_i, a)| a)
+                .filter(|a| range_start <= a.get_start_time() && a.get_start_time() <= range_end)
+                .cloned()
+                .collect();
+            let calendar = export_activities_to_ical(activities.as_slice());
+            println!("{}", calendar);
+            Ok(RTWMutation::Pure)
         }
     }
 }

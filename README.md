@@ -13,13 +13,18 @@ Command-line interface (CLI) time tracker.
 
 CLI usage is stable, underlying API is **not stable**.
 
+> Note: This software is built specifically as a productivity tool for myself,
+> not as a consumer resource. I cannot commit a large amount of time to maintaining this
+> software but I'll do my best to provide support if something fails =).
+
 This project is heavily inspired from [Timewarrior](https://github.com/GothenburgBitFactory/timewarrior).
 
 > For a stable feature-rich CLI time tracker, please use Timewarrior: https://timewarrior.net/.
 
-## Development
+## Why another time tracker tool?
 
-Development occurs on `dev`, releases are made on `master` branch.
+1. learn Rust
+2. I once lost a month worth of data with another time tracker tool (database corruption)...never again!
 
 ## Install
 
@@ -132,6 +137,10 @@ RTW doesn't create the config file for you, but it looks for one in the followin
 
 see `example` folder for a default config file.
 
+## Development
+
+Development occurs on `dev`, releases are made on `master` branch.
+
 ## Implementation
 
 RTW relies on json files for persistence.
@@ -145,3 +154,11 @@ Default location is the home (`~`) directory.
 
 **there is currently no file locking mechanism**: running several `rtw` commands at the same time
 may lead to undefined behavior.
+
+## Similar Tools
+
+* [timewarrior](https://github.com/GothenburgBitFactory/timewarrior)
+* [watson](https://github.com/TailorDev/Watson)
+* [jobrog](https://github.com/dfhoughton/jobrog)
+* [doug](https://github.com/chdsbd/doug)
+* ...
