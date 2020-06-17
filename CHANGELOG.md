@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.1](https://crates.io/crates/rtw/1.3.1) Jun 16, 2020
 
+* Add `dump` subcommand, dumps finished activities to [ICalendar](https://en.wikipedia.org/wiki/ICalendar).
 * Fix timeline crash when activity is too short to be displayed (#28)
 
 ## [1.3.0](https://crates.io/crates/rtw/1.3.0) Jun 13, 2020
