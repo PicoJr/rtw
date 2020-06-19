@@ -1,6 +1,6 @@
 [package]
 name = "rtw"
-version = "1.4.0"
+version = "1.4.1"
 authors = ["PicoJr <picojr_dev@gmx.com>"]
 edition = "2018"
 repository = "https://github.com/PicoJr/rtw"
@@ -25,7 +25,7 @@ chrono-english = "0.1.4"
 config = "0.10.1"
 ansi_term = "0.12.1"
 term_size = "0.3.2"
-tbl = "1.0.0-alpha"
+tbl = "1.1.0-alpha"
 icalendar = "0.9.0"
 
 [dev-dependencies]

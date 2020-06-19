@@ -1,5 +1,5 @@
 //! Timeline display
-use crate::rtw_core::activity::Activity;
+use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::durationw::DurationW;
 use crate::rtw_core::ActivityId;
 use ansi_term::{Color, Style};
@@ -31,6 +31,42 @@ fn chunkify(s: &str, size: usize) -> Vec<String> {
             .map(|s| String::from_iter(s.iter()))
             .collect();
         chunks
+    }
+}
+
+fn split_interval_if_needed(interval: &Interval) -> (Interval, Option<Interval>) {
+    let (activity_id, activity) = interval;
+    let start_time: DateTime<Local> = activity.get_start_time().into();
+    let stop_time: DateTime<Local> = activity.get_stop_time().into();
+    let day_span: i32 = stop_time.num_days_from_ce() - start_time.num_days_from_ce();
+    if day_span < 1 {
+        (interval.clone(), None) // activity start time and stop time same day
+    } else {
+        let same_day_midnight: DateTime<Local> = start_time.date().and_hms_milli(23, 59, 59, 999);
+        // Paranoia in case 23:59:59:999 < start_time < midnight
+        let (same_day_start, same_day_end) = if start_time < same_day_midnight {
+            (start_time, same_day_midnight)
+        } else {
+            (same_day_midnight, start_time)
+        };
+        let same_day_to_midnight = OngoingActivity::new(same_day_start.into(), activity.get_tags())
+            .into_activity(same_day_end.into())
+            .unwrap(); // safe to unwrap thanks to previous test: same_day_start <= same_day_end
+        let day_after: DateTime<Local> = start_time.date().and_hms(0, 0, 0) + Duration::days(1);
+        let other_days = OngoingActivity::new(day_after.into(), activity.get_tags())
+            .into_activity(stop_time.into())
+            .unwrap(); // safe to unwrap because stop_time >= day_after
+        (
+            (*activity_id, same_day_to_midnight),
+            Some((*activity_id, other_days)),
+        )
+    }
+}
+
+fn split_interval(interval: &Interval) -> Vec<Interval> {
+    match split_interval_if_needed(interval) {
+        (i, None) => vec![i],
+        (i, Some(other)) => std::iter::once(i).chain(split_interval(&other)).collect(),
     }
 }
 
@@ -147,11 +183,11 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
     for day in min_day..=max_day {
         let day_activities: Vec<Interval> = activities
             .iter()
-            .filter(|&(_, a)| {
+            .flat_map(|interval| split_interval(interval))
+            .filter(|(_, a)| {
                 let start_time: DateTime<Local> = a.get_start_time().into();
                 start_time.num_days_from_ce() == day
             })
-            .cloned()
             .collect();
         let day_month = day_activities
             .first()
@@ -164,6 +200,17 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
         let total_string = total.to_string();
         let right_padding = total_string.len() + 1; // +1 space
         let available_length = max(0, width - right_padding as usize) as usize;
+        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
+            .with_renderer(&render)
+            .with_length(available_length)
+            .with_boundaries((min_second, max_second))
+            .render()
+            .or_else(|e| match e {
+                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
+                TBLError::Intersection(left, right) => Err(anyhow!(
+                    "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
+                )),
+            })?;
         let legend = Renderer::new(day_activities.as_slice(), &bounds, &legend)
             .with_renderer(&render)
             .with_length(available_length)
@@ -171,8 +218,8 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             .render()
             .or_else(|e| match e {
                 TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
-                TBLError::Intersection(_, _) => Err(anyhow!(
-                    "failed to create timeline: some activities are overlapping"
+                TBLError::Intersection(left, right) => Err(anyhow!(
+                    "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
                 )),
             })?;
         for (i, line) in legend.iter().enumerate() {
@@ -182,17 +229,6 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                 rendered.push(format!("{}{:>8}", line, " ".to_string()));
             }
         }
-        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
-            .with_renderer(&render)
-            .with_length(available_length)
-            .with_boundaries((min_second, max_second))
-            .render()
-            .or_else(|e| match e {
-                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
-                TBLError::Intersection(_, _) => Err(anyhow!(
-                    "failed to create timeline: some activities are overlapping"
-                )),
-            })?;
         for (i, line) in timeline.iter().enumerate() {
             if i == 0 {
                 rendered.push(format!("{}{}", line, total_string));
