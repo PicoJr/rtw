@@ -161,6 +161,31 @@ mod tests {
     }
 
     #[test]
+    fn timeline_several_day_span() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("2019-12-24T19:43:00")
+            .arg("-")
+            .arg("2019-12-26T10:45:00")
+            .arg("christmas")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("timeline")
+            .arg("2019-12-20T10:43:00")
+            .arg("-")
+            .arg("2019-12-30T10:43:00")
+            .assert()
+            .success();
+    }
+
+    #[test]
     fn continue_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -416,7 +441,8 @@ mod tests {
             .arg("11:00")
             .arg("bar")
             .assert()
-            .failure();
+            .failure()
+            .stderr(predicates::str::contains("would overlap"));
     }
 
     #[test]
