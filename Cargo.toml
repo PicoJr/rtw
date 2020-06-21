@@ -1,6 +1,6 @@
 [package]
 name = "rtw"
-version = "1.4.1"
+version = "1.5.0"
 authors = ["PicoJr <picojr_dev@gmx.com>"]
 edition = "2018"
 repository = "https://github.com/PicoJr/rtw"
@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 keywords = ["time", "tracker", "cli", "tool"]
 categories = ["command-line-utilities"]
-include = ["src/**/*", "/LICENSE", "/README.md", "/CHANGELOG.md", "/commands.md", "shell-completion.md", "/img/*"]
+include = ["src/**/*", "/LICENSE", "/README.md", "/CHANGELOG.md", "/commands.md", "/shell-completion.md", "/img/*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
