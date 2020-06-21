@@ -71,7 +71,7 @@ fn split_time_range(tokens: &[String], clock: &dyn Clock) -> anyhow::Result<(Tim
 }
 
 pub fn get_app() -> App<'static, 'static> {
-    App::new("RTW")
+    App::new(crate_name!())
         .version(crate_version!())
         .author("PicoJr")
         .about("rust time tracking CLI")
@@ -224,6 +224,16 @@ pub fn get_app() -> App<'static, 'static> {
                 .arg(Arg::with_name("id").required(true).help("activity id")),
         )
         .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
+        .subcommand(
+            SubCommand::with_name("completion")
+                .about("generate completion file")
+                .arg(
+                    Arg::with_name("shell")
+                        .possible_values(&["bash", "zsh", "fish", "powershell", "elvish"])
+                        .takes_value(true)
+                        .required(true),
+                ),
+        )
 }
 
 pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Tags)> {
@@ -324,6 +334,19 @@ pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
         Ok(id)
     } else {
         Err(anyhow::anyhow!("could not parse id"))
+    }
+}
+
+pub fn parse_completion_args(completion_m: &ArgMatches) -> anyhow::Result<clap::Shell> {
+    let shell_maybe = completion_m.value_of("shell");
+    match shell_maybe {
+        Some("bash") => Ok(clap::Shell::Bash),
+        Some("zsh") => Ok(clap::Shell::Zsh),
+        Some("fish") => Ok(clap::Shell::Fish),
+        Some("powershell") => Ok(clap::Shell::PowerShell),
+        Some("elvish") => Ok(clap::Shell::Elvish),
+        None => Err(anyhow::anyhow!("missing shell")), // should never happen thanks to clap check
+        _ => Err(anyhow::anyhow!("invalid shell")),    // should never happen thanks to clap check
     }
 }
 

@@ -55,6 +55,10 @@ cargo build --release
 
 Download the corresponding archive from the [Release page](https://github.com/picojr/rtw/releases).
 
+### Shell Completion (Bash, Zsh, Fish, Powershell, Elvish)
+
+Please see [shell completion](shell-completion.md).
+
 ## Changelog
 
 Please see the [CHANGELOG](CHANGELOG.md) for a release history.

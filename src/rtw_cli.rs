@@ -29,6 +29,7 @@ pub enum RTWAction {
     Delete(ActivityId),
     DisplayCurrent,
     Timeline((DateTimeW, DateTimeW)),
+    Completion(clap::Shell),
 }
 
 pub enum RTWMutation {
@@ -92,6 +93,10 @@ where
             let ((range_start, range_end), _display_id) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
             Ok(RTWAction::DumpICal((range_start, range_end)))
+        }
+        ("completion", Some(sub_m)) => {
+            let shell = cli_helper::parse_completion_args(sub_m)?;
+            Ok(RTWAction::Completion(shell))
         }
         // default case: display current activity
         _ => Ok(RTWAction::DisplayCurrent),
@@ -260,6 +265,11 @@ where
                 .collect();
             let calendar = export_activities_to_ical(activities.as_slice());
             println!("{}", calendar);
+            Ok(RTWMutation::Pure)
+        }
+        RTWAction::Completion(shell) => {
+            let mut app = cli_helper::get_app();
+            app.gen_completions_to(crate_name!(), shell, &mut std::io::stdout());
             Ok(RTWMutation::Pure)
         }
     }
