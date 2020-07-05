@@ -388,6 +388,23 @@ mod tests {
     }
 
     #[test]
+    fn track_relative_time_am_pm() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09am")
+            .arg("-")
+            .arg("10am")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+    }
+
+    #[test]
     fn track_relative_missing_end() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
