@@ -2,7 +2,7 @@
 
 use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::durationw::DurationW;
-use crate::rtw_core::Tags;
+use crate::rtw_core::{Description, Tags};
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -16,6 +16,8 @@ pub struct Activity {
     stop_time: DateTimeW,
     /// Activity tags
     tags: Tags,
+    #[serde(default)]
+    description: Option<Description>,
 }
 
 impl Activity {
@@ -39,6 +41,11 @@ impl Activity {
     pub fn get_tags(&self) -> Tags {
         self.tags.clone()
     }
+
+    /// Return Description
+    pub fn get_description(&self) -> Option<Description> {
+        self.description.clone()
+    }
 }
 
 /// Activities are sorted by start time
@@ -61,6 +68,8 @@ pub struct OngoingActivity {
     pub start_time: DateTimeW,
     /// Activity tags
     pub tags: Tags,
+    #[serde(default)]
+    pub description: Option<Description>,
 }
 
 /// OngoingActivities are sorted by start time
@@ -78,8 +87,12 @@ impl PartialOrd for OngoingActivity {
 
 impl OngoingActivity {
     /// Constructor
-    pub fn new(start_time: DateTimeW, tags: Tags) -> Self {
-        OngoingActivity { start_time, tags }
+    pub fn new(start_time: DateTimeW, tags: Tags, description: Option<Description>) -> Self {
+        OngoingActivity {
+            start_time,
+            tags,
+            description,
+        }
     }
     /// Start time getter
     pub fn get_start_time(&self) -> DateTimeW {
@@ -97,6 +110,7 @@ impl OngoingActivity {
                 start_time: self.start_time,
                 stop_time,
                 tags: self.tags,
+                description: self.description,
             })
         } else {
             Err(anyhow!(
@@ -147,6 +161,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         let date = Local
             .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
@@ -172,6 +187,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         let other = Activity {
             start_time: Local
@@ -183,6 +199,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         assert!(overlap(&finished, &other).is_some());
         let other = Activity {
@@ -195,6 +212,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         assert!(overlap(&finished, &other).is_some());
         let other = Activity {
@@ -207,6 +225,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         assert!(overlap(&finished, &other).is_some());
         let other = Activity {
@@ -219,6 +238,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         assert!(overlap(&finished, &other).is_some());
         let other = Activity {
@@ -231,6 +251,7 @@ mod tests {
                 .unwrap()
                 .into(),
             tags: vec![],
+            description: None,
         };
         assert!(overlap(&finished, &other).is_none());
     }
