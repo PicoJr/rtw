@@ -12,8 +12,6 @@ use std::str::FromStr;
 
 mod chrono_clock;
 mod cli_helper;
-#[cfg(ical)]
-mod ical_export;
 mod ical_export;
 mod json_storage;
 mod rtw_cli;
