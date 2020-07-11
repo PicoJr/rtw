@@ -193,7 +193,7 @@ mod tests {
             OngoingActivity {
                 start_time: clock.get_time(),
                 tags: vec![String::from("a")],
-                descrption: None,
+                description: None,
             },
             true,
         );
