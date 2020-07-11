@@ -8,7 +8,7 @@ use crate::rtw_core::datetimew::DateTimeW;
 use crate::rtw_core::service::ActivityService;
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
-use crate::rtw_core::Tags;
+use crate::rtw_core::{Description, Tags};
 use crate::service::Service;
 use crate::timeline::render_days;
 use clap::ArgMatches;
@@ -20,8 +20,8 @@ type ActivityWithId = (ActivityId, Activity);
 /// see `run`
 pub enum RTWAction {
     CancelCurrent,
-    Start(DateTimeW, Tags),
-    Track((DateTimeW, DateTimeW), Tags),
+    Start(DateTimeW, Tags, Option<Description>),
+    Track((DateTimeW, DateTimeW), Tags, Option<Description>),
     Stop(DateTimeW),
     Summary((DateTimeW, DateTimeW), bool),
     DumpICal((DateTimeW, DateTimeW)),
@@ -50,9 +50,9 @@ where
 {
     match matches.subcommand() {
         ("start", Some(sub_m)) => {
-            let (start_time, tags) = cli_helper::parse_start_args(sub_m, clock)?;
+            let (start_time, tags, description) = cli_helper::parse_start_args(sub_m, clock)?;
             let abs_start_time = clock.date_time(start_time);
-            Ok(RTWAction::Start(abs_start_time, tags))
+            Ok(RTWAction::Start(abs_start_time, tags, description))
         }
         ("stop", Some(sub_m)) => {
             let stop_time = cli_helper::parse_stop_args(sub_m, clock)?;
@@ -75,10 +75,11 @@ where
             Ok(RTWAction::Delete(id))
         }
         ("track", Some(sub_m)) => {
-            let (start_time, stop_time, tags) = cli_helper::parse_track_args(sub_m, clock)?;
+            let (start_time, stop_time, tags, description) =
+                cli_helper::parse_track_args(sub_m, clock)?;
             let start_time = clock.date_time(start_time);
             let stop_time = clock.date_time(stop_time);
-            Ok(RTWAction::Track((start_time, stop_time), tags))
+            Ok(RTWAction::Track((start_time, stop_time), tags, description))
         }
         ("day", Some(_sub_m)) => {
             let (range_start, range_end) = clock.today_range();
@@ -115,14 +116,15 @@ where
     Cl: Clock,
 {
     match action {
-        RTWAction::Start(start_time, tags) => {
-            let started = OngoingActivity::new(start_time, tags);
+        RTWAction::Start(start_time, tags, description) => {
+            let started = OngoingActivity::new(start_time, tags, description);
             println!("Tracking {}", started.get_title());
             println!("Started  {}", started.get_start_time());
             Ok(RTWMutation::Start(started))
         }
-        RTWAction::Track((start_time, stop_time), tags) => {
-            let tracked = OngoingActivity::new(start_time, tags).into_activity(stop_time)?;
+        RTWAction::Track((start_time, stop_time), tags, description) => {
+            let tracked =
+                OngoingActivity::new(start_time, tags, description).into_activity(stop_time)?;
             println!("Recorded {}", tracked.get_title());
             println!("Started {:>20}", tracked.get_start_time());
             println!("Ended   {:>20}", tracked.get_stop_time());
@@ -189,7 +191,11 @@ where
                 }
                 Some((_id, finished)) => {
                     println!("Tracking {}", finished.get_title());
-                    let new_current = OngoingActivity::new(clock.get_time(), finished.get_tags());
+                    let new_current = OngoingActivity::new(
+                        clock.get_time(),
+                        finished.get_tags(),
+                        finished.get_description(),
+                    );
                     Ok(RTWMutation::Start(new_current))
                 }
             }

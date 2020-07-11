@@ -49,13 +49,21 @@ fn split_interval_if_needed(interval: &Interval) -> (Interval, Option<Interval>)
         } else {
             (same_day_midnight, start_time)
         };
-        let same_day_to_midnight = OngoingActivity::new(same_day_start.into(), activity.get_tags())
-            .into_activity(same_day_end.into())
-            .unwrap(); // safe to unwrap thanks to previous test: same_day_start <= same_day_end
+        let same_day_to_midnight = OngoingActivity::new(
+            same_day_start.into(),
+            activity.get_tags(),
+            activity.get_description(),
+        )
+        .into_activity(same_day_end.into())
+        .unwrap(); // safe to unwrap thanks to previous test: same_day_start <= same_day_end
         let day_after: DateTime<Local> = start_time.date().and_hms(0, 0, 0) + Duration::days(1);
-        let other_days = OngoingActivity::new(day_after.into(), activity.get_tags())
-            .into_activity(stop_time.into())
-            .unwrap(); // safe to unwrap because stop_time >= day_after
+        let other_days = OngoingActivity::new(
+            day_after.into(),
+            activity.get_tags(),
+            activity.get_description(),
+        )
+        .into_activity(stop_time.into())
+        .unwrap(); // safe to unwrap because stop_time >= day_after
         (
             (*activity_id, same_day_to_midnight),
             Some((*activity_id, other_days)),

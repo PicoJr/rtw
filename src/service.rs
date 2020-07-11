@@ -148,6 +148,7 @@ mod tests {
         let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
+            description: None,
         });
         start.unwrap();
         let current = service.get_current_activity();
@@ -163,6 +164,7 @@ mod tests {
         let start = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
+            description: None,
         });
         start.unwrap();
         assert!(service.get_current_activity().unwrap().is_some());
@@ -178,6 +180,7 @@ mod tests {
         let start_0 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("a")],
+            description: None,
         });
         assert!(start_0.is_ok());
         assert!(service.get_current_activity().unwrap().is_some());
@@ -187,6 +190,7 @@ mod tests {
         let start_1 = service.start_activity(OngoingActivity {
             start_time: clock.get_time(),
             tags: vec![String::from("b")],
+            description: None,
         });
         assert!(start_1.is_ok());
         assert!(service.get_current_activity().unwrap().is_some());
@@ -202,6 +206,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         )
         .into_activity(
             Local
@@ -218,6 +223,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         );
         let started = service.start_activity(other);
         assert!(started.is_err());
@@ -233,6 +239,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         )
         .into_activity(
             Local
@@ -249,6 +256,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         );
         let started = service.start_activity(other);
         assert!(started.is_ok());
@@ -285,6 +293,7 @@ mod tests {
         let _start = service.start_activity(OngoingActivity::new(
             activity_start,
             vec![String::from("a")],
+            None,
         ));
         let _stop = service.stop_current_activity(activity_end);
         let activities = service.filter_activities(|(_id, a)| {
@@ -305,6 +314,7 @@ mod tests {
         let _start = service.start_activity(OngoingActivity::new(
             activity_start,
             vec![String::from("a")],
+            None,
         ));
         let _stop = service.stop_current_activity(activity_end);
         let activities = service.filter_activities(|(_id, a)| {
@@ -323,6 +333,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         )
         .into_activity(
             Local
@@ -339,6 +350,7 @@ mod tests {
                 .unwrap()
                 .into(),
             vec![],
+            None,
         )
         .into_activity(
             Local

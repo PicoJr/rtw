@@ -3,7 +3,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::rtw_core::clock::{Clock, Time};
 use crate::rtw_core::datetimew::DateTimeW;
-use crate::rtw_core::{ActivityId, Tags};
+use crate::rtw_core::{ActivityId, Description, Tags};
 use crate::time_tools::TimeTools;
 use std::str::FromStr;
 
@@ -103,6 +103,12 @@ pub fn get_app() -> App<'static, 'static> {
                             "optional time clue followed by at least 1 tag\n",
                             "e.g '4 min ago foo' or '09:00 foo' or 'foo' "
                         )),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .takes_value(true)
+                        .help("long description"),
                 ),
         )
         .subcommand(
@@ -117,6 +123,12 @@ pub fn get_app() -> App<'static, 'static> {
                             "start - end tags...\n",
                             "e.g '09:00 - 10:00 foo' "
                         )),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .takes_value(true)
+                        .help("long description"),
                 ),
         )
         .subcommand(
@@ -236,7 +248,11 @@ pub fn get_app() -> App<'static, 'static> {
         )
 }
 
-pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Tags)> {
+pub fn parse_start_args(
+    start_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Tags, Option<Description>)> {
+    let description = start_m.value_of("description").map(|s| s.to_string());
     let values_arg = start_m.values_of("tokens"); // optional time clue, tags
     if let Some(values) = values_arg {
         let values: Tags = values.map(String::from).collect();
@@ -244,7 +260,7 @@ pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Resu
         return if tags.is_empty() {
             Err(anyhow::anyhow!("no tags provided"))
         } else {
-            Ok((time, tags))
+            Ok((time, tags, description))
         };
     }
     Err(anyhow::anyhow!("neither time clue nor tags provided")) // it should be prevented by clap
@@ -253,12 +269,14 @@ pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Resu
 pub fn parse_track_args(
     track_m: &ArgMatches,
     clock: &dyn Clock,
-) -> anyhow::Result<(Time, Time, Tags)> {
+) -> anyhow::Result<(Time, Time, Tags, Option<Description>)> {
+    let description = track_m.value_of("description").map(|s| s.to_string());
     let values_arg = track_m
         .values_of("tokens")
         .expect("start time, end time and at least 1 tag required");
     let values: Tags = values_arg.map(String::from).collect();
-    split_time_range_from_tags(&values, clock)
+    let (range_start, range_end, activity_tags) = split_time_range_from_tags(&values, clock)?;
+    Ok((range_start, range_end, activity_tags, description))
 }
 
 pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
