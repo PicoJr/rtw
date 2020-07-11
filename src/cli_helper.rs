@@ -107,8 +107,9 @@ pub fn get_app() -> App<'static, 'static> {
                 .arg(
                     Arg::with_name("description")
                         .short("d")
+                        .long("description")
                         .takes_value(true)
-                        .help("long description"),
+                        .help("long activity description"),
                 ),
         )
         .subcommand(
@@ -127,8 +128,9 @@ pub fn get_app() -> App<'static, 'static> {
                 .arg(
                     Arg::with_name("description")
                         .short("d")
+                        .long("description")
                         .takes_value(true)
-                        .help("long description"),
+                        .help("long activity description"),
                 ),
         )
         .subcommand(
@@ -175,6 +177,12 @@ pub fn get_app() -> App<'static, 'static> {
                     Arg::with_name("id")
                         .long("id")
                         .help("display activities id"),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .long("description")
+                        .help("display activities descriptions"),
                 ),
         )
         .subcommand(
@@ -293,8 +301,9 @@ pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result
 pub fn parse_summary_args(
     summary_m: &ArgMatches,
     clock: &dyn Clock,
-) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+) -> anyhow::Result<((DateTimeW, DateTimeW), bool, bool)> {
     let display_id = summary_m.is_present("id");
+    let display_description = summary_m.is_present("description");
     let values_arg = summary_m.values_of("tokens");
     if let Some(values) = values_arg {
         let values: Vec<String> = values.map(String::from).collect();
@@ -303,7 +312,7 @@ pub fn parse_summary_args(
             Ok((range_start, range_end)) => {
                 let range_start = clock.date_time(range_start);
                 let range_end = clock.date_time(range_end);
-                Ok(((range_start, range_end), display_id))
+                Ok(((range_start, range_end), display_id, display_description))
             }
             Err(e) => Err(anyhow::anyhow!(e)),
         };
@@ -319,7 +328,7 @@ pub fn parse_summary_args(
             clock.today_range()
         }
     };
-    Ok((range, display_id))
+    Ok((range, display_id, display_description))
 }
 
 pub fn parse_timeline_args(

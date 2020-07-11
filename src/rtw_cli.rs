@@ -23,7 +23,7 @@ pub enum RTWAction {
     Start(DateTimeW, Tags, Option<Description>),
     Track((DateTimeW, DateTimeW), Tags, Option<Description>),
     Stop(DateTimeW),
-    Summary((DateTimeW, DateTimeW), bool),
+    Summary((DateTimeW, DateTimeW), bool, bool),
     DumpICal((DateTimeW, DateTimeW)),
     Continue,
     Delete(ActivityId),
@@ -60,9 +60,13 @@ where
             Ok(RTWAction::Stop(abs_stop_time))
         }
         ("summary", Some(sub_m)) => {
-            let ((range_start, range_end), display_id) =
+            let ((range_start, range_end), display_id, display_description) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
-            Ok(RTWAction::Summary((range_start, range_end), display_id))
+            Ok(RTWAction::Summary(
+                (range_start, range_end),
+                display_id,
+                display_description,
+            ))
         }
         ("timeline", Some(sub_m)) => {
             let ((range_start, range_end), _display_id) =
@@ -91,7 +95,7 @@ where
         }
         ("cancel", Some(_sub_m)) => Ok(RTWAction::CancelCurrent),
         ("dump", Some(sub_m)) => {
-            let ((range_start, range_end), _display_id) =
+            let ((range_start, range_end), _display_id, _description) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
             Ok(RTWAction::DumpICal((range_start, range_end)))
         }
@@ -147,7 +151,7 @@ where
                 }
             }
         }
-        RTWAction::Summary((range_start, range_end), display_id) => {
+        RTWAction::Summary((range_start, range_end), display_id, display_description) => {
             let activities = service.get_finished_activities()?;
             let activities: Vec<(ActivityId, Activity)> = activities
                 .iter()
@@ -165,7 +169,7 @@ where
                 println!("No filtered data found.");
             } else {
                 for (id, finished) in activities {
-                    let mut output = format!(
+                    let output = format!(
                         "{:width$} {} {} {}",
                         finished.get_title(),
                         finished.get_start_time(),
@@ -173,9 +177,16 @@ where
                         finished.get_duration(),
                         width = longest_title
                     );
-                    if display_id {
-                        output = format!("{:>1} {}", id, output);
-                    }
+                    let output = if display_id {
+                        format!("{:>1} {}", id, output)
+                    } else {
+                        output
+                    };
+                    let output = match (display_description, finished.get_description()) {
+                        (false, _) => output,
+                        (true, None) => output,
+                        (true, Some(description)) => format!("{}\n{}", output, description),
+                    };
                     println!("{}", output)
                 }
             }

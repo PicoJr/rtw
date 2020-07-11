@@ -18,11 +18,20 @@ impl From<Activity> for Event {
         let start_time = a.get_start_time();
         let stop_time = a.get_stop_time();
         let title = a.get_title();
-        Event::new()
-            .summary(title.as_str())
-            .starts(start_time)
-            .ends(stop_time)
-            .done()
+        let event = match a.get_description() {
+            None => Event::new()
+                .summary(title.as_str())
+                .starts(start_time)
+                .ends(stop_time)
+                .done(),
+            Some(description) => Event::new()
+                .summary(title.as_str())
+                .description(&description)
+                .starts(start_time)
+                .ends(stop_time)
+                .done(),
+        };
+        event
     }
 }
 
