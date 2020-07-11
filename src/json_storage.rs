@@ -12,6 +12,22 @@ type Activities = Vec<Activity>;
 type ActivityWithId = (ActivityId, Activity);
 type OngoingActivityWithId = (ActivityId, OngoingActivity);
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct FinishedActivities {
+    #[serde(default)]
+    pub semver: Option<String>,
+    pub activities: Activities,
+}
+
+impl Default for FinishedActivities {
+    fn default() -> Self {
+        FinishedActivities {
+            semver: Some(crate_version!().to_string()),
+            activities: vec![],
+        }
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
     #[error("storage io error")]
@@ -38,25 +54,37 @@ impl JsonStorage {
         }
     }
 
-    fn get_finished_activities(&self) -> Result<Vec<Activity>, JsonStorageError> {
+    fn get_finished_activities(&self) -> Result<FinishedActivities, JsonStorageError> {
         if Path::exists(&self.finished_path) {
             let file = OpenOptions::new()
                 .read(true)
                 .write(false)
                 .open(&self.finished_path)?;
-            let finished_activities: Activities = serde_json::from_reader(file)?;
-            Ok(finished_activities)
+            let finished_activities: serde_json::error::Result<FinishedActivities> =
+                serde_json::from_reader(file);
+            finished_activities.or_else(|_| {
+                let file = OpenOptions::new()
+                    .read(true)
+                    .write(false)
+                    .open(&self.finished_path)?;
+                // try to parse legacy format.
+                let activities: Activities = serde_json::from_reader(file)?;
+                Ok(FinishedActivities {
+                    semver: None,
+                    activities,
+                })
+            })
         } else {
-            Ok(vec![])
+            Ok(FinishedActivities::default())
         }
     }
 
     fn get_sorted_activities(&self) -> Result<Vec<(ActivityId, Activity)>, JsonStorageError> {
         let mut finished_activities = self.get_finished_activities()?;
-        finished_activities.sort();
-        Ok((0..finished_activities.len())
+        finished_activities.activities.sort();
+        Ok((0..finished_activities.activities.len())
             .rev()
-            .zip(finished_activities)
+            .zip(finished_activities.activities)
             .collect())
     }
 }
@@ -68,16 +96,21 @@ impl Storage for JsonStorage {
         if !Path::exists(&self.finished_path) {
             let file = File::create(&self.finished_path)?;
             let activities: Activities = vec![activity];
-            serde_json::to_writer(file, &activities)?;
+            let finished_activities = FinishedActivities {
+                semver: Some(crate_version!().to_string()),
+                activities,
+            };
+            serde_json::to_writer(file, &finished_activities)?;
             Ok(())
         } else {
-            let mut activities = self.get_finished_activities()?;
-            activities.push(activity);
+            let mut finished_activities = self.get_finished_activities()?;
+            finished_activities.activities.push(activity);
             let file = OpenOptions::new()
                 .write(true)
                 .truncate(true)
                 .open(&self.finished_path)?;
-            serde_json::to_writer(file, &activities)?;
+            finished_activities.semver = Some(crate_version!().to_string());
+            serde_json::to_writer(file, &finished_activities)?;
             Ok(())
         }
     }
