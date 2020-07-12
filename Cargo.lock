@@ -270,7 +270,7 @@ dependencies = [
 
 [[package]]
 name = "htp"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "chrono 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "rtw"
-version = "2.0.0-alpha"
+version = "2.0.0-alpha.1"
 dependencies = [
  "ansi_term 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -573,7 +573,7 @@ dependencies = [
  "clap 2.33.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "config 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "htp 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "htp 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "icalendar 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "predicates 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.112 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -889,7 +889,7 @@ dependencies = [
 "checksum generic-array 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c68f0274ae0e023facc3c97b2e00f076be70e254bc851d972503b328db79b2ec"
 "checksum getrandom 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"
 "checksum hermit-abi 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "b9586eedd4ce6b3c498bc3b4dd92fc9f11166aa908a914071953768066c67909"
-"checksum htp 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0affa17eb56aa8297c7be5c4c97227c8a25873a791602d55c98c9796ea2a74df"
+"checksum htp 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "98ae0676463cabb845c801497aef5c900836a04d0f42db947d9b0d887c7bd92b"
 "checksum icalendar 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "246d9eb8ae541ca077ff2b4fda671cb8ec7aaa8dabafdb61b48f745e77f86181"
 "checksum itertools 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
 "checksum itoa 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "dc6f3ad7b9d11a0c00842ff8de1b60ee58661048eb8049ed33c73594f359d7e6"
