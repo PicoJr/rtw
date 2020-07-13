@@ -16,13 +16,21 @@ pub trait ActivityService {
     /// May fail depending on backend implementation
     ///
     /// Returns new current activity
-    fn start_activity(&mut self, activity: OngoingActivity) -> anyhow::Result<OngoingActivity>;
+    fn start_activity(
+        &mut self,
+        activity: OngoingActivity,
+        deny_overlapping: bool,
+    ) -> anyhow::Result<OngoingActivity>;
     /// Stop current activity
     ///
     /// May fail depending on backend implementation
     ///
     /// Returns stopped activity if any
-    fn stop_current_activity(&mut self, time: DateTimeW) -> anyhow::Result<Option<Activity>>;
+    fn stop_current_activity(
+        &mut self,
+        time: DateTimeW,
+        deny_overlapping: bool,
+    ) -> anyhow::Result<Option<Activity>>;
     /// Cancel current activity
     ///
     /// May fail depending on backend implementation
@@ -58,5 +66,9 @@ pub trait ActivityService {
     /// May fail depending on backend implementation
     ///
     /// Returns tracked activity if successful
-    fn track_activity(&mut self, activity: Activity) -> anyhow::Result<Activity>;
+    fn track_activity(
+        &mut self,
+        activity: Activity,
+        deny_overlapping: bool,
+    ) -> anyhow::Result<Activity>;
 }

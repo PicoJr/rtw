@@ -8,7 +8,8 @@ use std::path::PathBuf;
 
 const DEFAULT_CONFIG: &str = r#"
     {
-        "timeline_colors": [[183,28,28], [26,35,126], [0,77,64], [38,50,56]]
+        "timeline_colors": [[183,28,28], [26,35,126], [0,77,64], [38,50,56]],
+        "deny_overlapping": true
     }
 "#;
 
@@ -18,6 +19,7 @@ type RGB = (u8, u8, u8);
 pub struct RTWConfig {
     pub storage_dir_path: PathBuf,
     pub timeline_colors: Vec<RGB>,
+    pub deny_overlapping: bool,
 }
 
 impl RTWConfig {
@@ -26,6 +28,7 @@ impl RTWConfig {
         RTWConfig {
             storage_dir_path: home_dir, // stores finished activities
             timeline_colors: vec![(183, 28, 28), (26, 35, 126), (0, 77, 64), (38, 50, 56)],
+            deny_overlapping: true,
         }
     }
 }

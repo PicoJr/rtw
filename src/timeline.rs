@@ -200,7 +200,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
         let total_string = total.to_string();
         let right_padding = total_string.len() + 1; // +1 space
         let available_length = max(0, width - right_padding as usize) as usize;
-        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
+        let data = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
             .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
@@ -222,18 +222,21 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
                 )),
             })?;
-        for (i, line) in legend.iter().enumerate() {
-            if i == 0 {
-                rendered.push(format!("{}{:>8}", line, day_month));
-            } else {
-                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+        let timeline = legend.iter().zip(data.iter());
+        for (i, (legend_timelines, data_timelines)) in timeline.enumerate() {
+            for line in legend_timelines {
+                if i == 0 {
+                    rendered.push(format!("{}{:>8}", line, day_month));
+                } else {
+                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                }
             }
-        }
-        for (i, line) in timeline.iter().enumerate() {
-            if i == 0 {
-                rendered.push(format!("{}{}", line, total_string));
-            } else {
-                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+            for line in data_timelines {
+                if i == 0 {
+                    rendered.push(format!("{}{}", line, total_string));
+                } else {
+                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                }
             }
         }
     }

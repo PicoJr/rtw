@@ -45,6 +45,6 @@ fn main() -> anyhow::Result<()> {
         println!("(dry-run) nothing done");
         Ok(())
     } else {
-        run_mutation(mutation, &mut service)
+        run_mutation(mutation, &mut service, &config)
     }
 }

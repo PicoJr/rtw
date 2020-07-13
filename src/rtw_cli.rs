@@ -276,21 +276,25 @@ where
 }
 
 /// Side effect
-pub fn run_mutation<S>(action: RTWMutation, service: &mut Service<S>) -> anyhow::Result<()>
+pub fn run_mutation<S>(
+    action: RTWMutation,
+    service: &mut Service<S>,
+    config: &RTWConfig,
+) -> anyhow::Result<()>
 where
     S: Storage,
 {
     match action {
         RTWMutation::Start(activity) => {
-            let _started = service.start_activity(activity)?;
+            let _started = service.start_activity(activity, config.deny_overlapping)?;
             Ok(())
         }
         RTWMutation::Track(activity) => {
-            let _tracked = service.track_activity(activity)?;
+            let _tracked = service.track_activity(activity, config.deny_overlapping)?;
             Ok(())
         }
         RTWMutation::Stop(stop_time) => {
-            let _stopped = service.stop_current_activity(stop_time)?;
+            let _stopped = service.stop_current_activity(stop_time, config.deny_overlapping)?;
             Ok(())
         }
         RTWMutation::Delete(activity_id) => {

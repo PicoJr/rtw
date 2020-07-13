@@ -1,4 +1,5 @@
 {
     "storage_dir_path": "/home/nol",
-    "timeline_colors": [[183,28,28], [26,35,126], [0,77,64], [130,119,23]]
+    "timeline_colors": [[183,28,28], [26,35,126], [0,77,64], [130,119,23]],
+    "deny_overlapping": true
 }
