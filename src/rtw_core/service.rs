@@ -7,10 +7,14 @@ use crate::rtw_core::ActivityId;
 ///
 /// Abstracts activities queries and modifications
 pub trait ActivityService {
-    /// Get current activity if any
+    /// Get ongoing activities if any
     ///
     /// May fail depending on backend implementation
-    fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>>;
+    fn get_ongoing_activities(&self) -> anyhow::Result<Vec<(ActivityId, OngoingActivity)>>;
+    /// Get ongoing activity with id if any
+    ///
+    /// May fail depending on backend implementation
+    fn get_ongoing_activity(&self, id: ActivityId) -> anyhow::Result<Option<OngoingActivity>>;
     /// Start a new activity
     ///
     /// May fail depending on backend implementation
@@ -20,15 +24,16 @@ pub trait ActivityService {
         &mut self,
         activity: OngoingActivity,
         deny_overlapping: bool,
-    ) -> anyhow::Result<OngoingActivity>;
+    ) -> anyhow::Result<(OngoingActivity, Option<Activity>)>;
     /// Stop current activity
     ///
     /// May fail depending on backend implementation
     ///
     /// Returns stopped activity if any
-    fn stop_current_activity(
+    fn stop_ongoing_activity(
         &mut self,
         time: DateTimeW,
+        id: ActivityId,
         deny_overlapping: bool,
     ) -> anyhow::Result<Option<Activity>>;
     /// Cancel current activity
@@ -36,7 +41,10 @@ pub trait ActivityService {
     /// May fail depending on backend implementation
     ///
     /// Returns cancelled activity if any
-    fn cancel_current_activity(&mut self) -> anyhow::Result<Option<OngoingActivity>>;
+    fn cancel_ongoing_activity(
+        &mut self,
+        id: ActivityId,
+    ) -> anyhow::Result<Option<OngoingActivity>>;
     /// Filter finished activities
     ///
     /// May fail depending on implementation

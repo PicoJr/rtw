@@ -35,17 +35,29 @@ pub trait Storage {
     ///
     /// Returns deleted activity if successful
     fn delete_activity(&self, id: ActivityId) -> Result<Option<Activity>, Self::StorageError>;
-    /// Retrieve current activity if any
+    /// Retrieve ongoing activities if any
     ///
     /// May fail depending on backend implementation
-    fn get_current_activity(&self) -> Result<Option<OngoingActivity>, Self::StorageError>;
-    /// Set `activity` as current activity
+    fn get_ongoing_activities(
+        &self,
+    ) -> Result<Vec<(ActivityId, OngoingActivity)>, Self::StorageError>;
+    /// Retrieve ongoing activity with id if any
     ///
     /// May fail depending on backend implementation
-    fn set_current_activity(&mut self, activity: OngoingActivity)
+    fn get_ongoing_activity(
+        &self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError>;
+    /// Add `activity` to ongoing activities
+    ///
+    /// May fail depending on backend implementation
+    fn add_ongoing_activity(&mut self, activity: OngoingActivity)
         -> Result<(), Self::StorageError>;
-    /// Reset current activity to none
+    /// Remove ongoing activity
     ///
-    /// After calling this function, get_current_activity should return None
-    fn reset_current_activity(&mut self) -> Result<Option<OngoingActivity>, Self::StorageError>;
+    /// May fail depending on backend implementation
+    fn remove_ongoing_activity(
+        &mut self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError>;
 }

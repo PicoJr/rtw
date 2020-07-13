@@ -1,6 +1,7 @@
 //! Translate CLI args to calls to activity Service.
 use crate::cli_helper;
 use crate::ical_export::export_activities_to_ical;
+use crate::rtw_cli::OptionalOrAmbiguousOrNotFound::Optional;
 use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
@@ -19,10 +20,10 @@ type ActivityWithId = (ActivityId, Activity);
 ///
 /// see `run`
 pub enum RTWAction {
-    CancelCurrent,
+    Cancel(Option<ActivityId>),
     Start(DateTimeW, Tags),
     Track((DateTimeW, DateTimeW), Tags),
-    Stop(DateTimeW),
+    Stop(DateTimeW, Option<ActivityId>),
     Summary((DateTimeW, DateTimeW), bool),
     DumpICal((DateTimeW, DateTimeW)),
     Continue,
@@ -35,10 +36,39 @@ pub enum RTWAction {
 pub enum RTWMutation {
     Start(OngoingActivity),
     Track(Activity),
-    Stop(DateTimeW),
+    Stop(DateTimeW, ActivityId),
     Delete(ActivityId),
-    CancelCurrent,
+    Cancel(ActivityId),
     Pure,
+}
+
+enum OptionalOrAmbiguousOrNotFound {
+    Optional(Option<(ActivityId, OngoingActivity)>),
+    Ambiguous,
+    NotFound(ActivityId),
+}
+
+fn get_ongoing_activity<S: Storage>(
+    id_maybe: Option<ActivityId>,
+    service: &Service<S>,
+) -> anyhow::Result<OptionalOrAmbiguousOrNotFound> {
+    match id_maybe {
+        None => match service.get_ongoing_activities()?.as_slice() {
+            [] => Ok(OptionalOrAmbiguousOrNotFound::Optional(None)),
+            [(cancelled_id, cancelled)] => Ok(OptionalOrAmbiguousOrNotFound::Optional(Some((
+                *cancelled_id,
+                cancelled.clone(),
+            )))),
+            _ => Ok(OptionalOrAmbiguousOrNotFound::Ambiguous),
+        },
+        Some(cancelled_id) => match service.get_ongoing_activity(cancelled_id)? {
+            None => Ok(OptionalOrAmbiguousOrNotFound::NotFound(cancelled_id)),
+            Some(cancelled) => Ok(OptionalOrAmbiguousOrNotFound::Optional(Some((
+                cancelled_id,
+                cancelled,
+            )))),
+        },
+    }
 }
 
 /// Translate CLI args to actions (side-effect free)
@@ -55,9 +85,9 @@ where
             Ok(RTWAction::Start(abs_start_time, tags))
         }
         ("stop", Some(sub_m)) => {
-            let stop_time = cli_helper::parse_stop_args(sub_m, clock)?;
+            let (stop_time, stopped_id_maybe) = cli_helper::parse_stop_args(sub_m, clock)?;
             let abs_stop_time = clock.date_time(stop_time);
-            Ok(RTWAction::Stop(abs_stop_time))
+            Ok(RTWAction::Stop(abs_stop_time, stopped_id_maybe))
         }
         ("summary", Some(sub_m)) => {
             let ((range_start, range_end), display_id) =
@@ -88,7 +118,10 @@ where
             let (range_start, range_end) = clock.this_week_range();
             Ok(RTWAction::Timeline((range_start, range_end)))
         }
-        ("cancel", Some(_sub_m)) => Ok(RTWAction::CancelCurrent),
+        ("cancel", Some(sub_m)) => {
+            let cancelled_id_maybe = cli_helper::parse_cancel_args(sub_m)?;
+            Ok(RTWAction::Cancel(cancelled_id_maybe))
+        }
         ("dump", Some(sub_m)) => {
             let ((range_start, range_end), _display_id) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
@@ -129,18 +162,25 @@ where
             println!("Total   {:>20}", tracked.get_duration());
             Ok(RTWMutation::Track(tracked))
         }
-        RTWAction::Stop(stop_time) => {
-            let stopped_maybe = service.get_current_activity()?;
-            match stopped_maybe {
-                Some(stopped) => {
+        RTWAction::Stop(stop_time, activity_id) => {
+            match get_ongoing_activity(activity_id, &service)? {
+                Optional(None) => {
+                    println!("There is no active time tracking.");
+                    Ok(RTWMutation::Pure)
+                }
+                Optional(Some((stopped_id, stopped))) => {
                     println!("Recorded {}", stopped.get_title());
                     println!("Started {:>20}", stopped.get_start_time());
                     println!("Ended   {:>20}", stop_time);
                     println!("Total   {:>20}", stop_time - stopped.get_start_time());
-                    Ok(RTWMutation::Stop(stop_time))
+                    Ok(RTWMutation::Stop(stop_time, stopped_id))
                 }
-                None => {
-                    println!("There is no active time tracking.");
+                OptionalOrAmbiguousOrNotFound::Ambiguous => {
+                    println!("Multiple ongoing activities, please provide an id.");
+                    Ok(RTWMutation::Pure)
+                }
+                OptionalOrAmbiguousOrNotFound::NotFound(stopped_id) => {
+                    println!("No ongoing activity with id {}.", stopped_id);
                     Ok(RTWMutation::Pure)
                 }
             }
@@ -212,13 +252,18 @@ where
             }
         }
         RTWAction::DisplayCurrent => {
-            let activity_maybe = service.get_current_activity()?;
-            match activity_maybe {
-                Some(current) => {
-                    println!("Tracking {}", current.get_title());
-                    println!("Total    {}", clock.get_time() - current.get_start_time());
+            let ongoing_activities = service.get_ongoing_activities()?;
+            if ongoing_activities.is_empty() {
+                println!("There is no active time tracking.");
+            } else {
+                for (id, ongoing_activity) in ongoing_activities {
+                    println!("Tracking {}", ongoing_activity.get_title());
+                    println!(
+                        "Total    {}",
+                        clock.get_time() - ongoing_activity.get_start_time()
+                    );
+                    println!("Id       {}", id);
                 }
-                None => println!("There is no active time tracking."),
             }
             Ok(RTWMutation::Pure)
         }
@@ -237,24 +282,29 @@ where
             }
             Ok(RTWMutation::Pure)
         }
-        RTWAction::CancelCurrent => {
-            let cancelled_maybe = service.get_current_activity()?;
-            match cancelled_maybe {
-                Some(cancelled) => {
-                    println!("Cancelled {}", cancelled.get_title());
-                    println!("Started   {:>20}", cancelled.get_start_time());
-                    println!(
-                        "Total     {:>20}",
-                        clock.get_time() - cancelled.get_start_time()
-                    );
-                    Ok(RTWMutation::CancelCurrent)
-                }
-                None => {
-                    println!("Nothing to cancel: there is no active time tracking.");
-                    Ok(RTWMutation::Pure)
-                }
+        RTWAction::Cancel(id_maybe) => match get_ongoing_activity(id_maybe, service)? {
+            Optional(None) => {
+                println!("Nothing to cancel: there is no active time tracking.");
+                Ok(RTWMutation::Pure)
             }
-        }
+            Optional(Some((cancelled_id, cancelled))) => {
+                println!("Cancelled {}", cancelled.get_title());
+                println!("Started   {:>20}", cancelled.get_start_time());
+                println!(
+                    "Total     {:>20}",
+                    clock.get_time() - cancelled.get_start_time()
+                );
+                Ok(RTWMutation::Cancel(cancelled_id))
+            }
+            OptionalOrAmbiguousOrNotFound::Ambiguous => {
+                println!("Multiple ongoing activities, please provide an id.");
+                Ok(RTWMutation::Pure)
+            }
+            OptionalOrAmbiguousOrNotFound::NotFound(cancelled_id) => {
+                println!("No ongoing activity with id {}.", cancelled_id);
+                Ok(RTWMutation::Pure)
+            }
+        },
         RTWAction::DumpICal((range_start, range_end)) => {
             let activities = service.get_finished_activities()?;
             let activities: Vec<Activity> = activities
@@ -293,16 +343,17 @@ where
             let _tracked = service.track_activity(activity, config.deny_overlapping)?;
             Ok(())
         }
-        RTWMutation::Stop(stop_time) => {
-            let _stopped = service.stop_current_activity(stop_time, config.deny_overlapping)?;
+        RTWMutation::Stop(stop_time, activity_id) => {
+            let _stopped =
+                service.stop_ongoing_activity(stop_time, activity_id, config.deny_overlapping)?;
             Ok(())
         }
         RTWMutation::Delete(activity_id) => {
             let _deleted = service.delete_activity(activity_id)?;
             Ok(())
         }
-        RTWMutation::CancelCurrent => {
-            let _cancelled = service.cancel_current_activity()?;
+        RTWMutation::Cancel(activity_id) => {
+            let _cancelled = service.cancel_ongoing_activity(activity_id)?;
             Ok(())
         }
         RTWMutation::Pure => {

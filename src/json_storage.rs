@@ -2,13 +2,15 @@
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
-use std::fs;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 type Activities = Vec<Activity>;
 type ActivityWithId = (ActivityId, Activity);
+type OngoingActivityWithId = (ActivityId, OngoingActivity);
 
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
@@ -21,6 +23,11 @@ pub enum JsonStorageError {
 pub struct JsonStorage {
     current_path: PathBuf,
     finished_path: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OngoingActivities {
+    ongoing: Vec<OngoingActivity>,
 }
 
 impl JsonStorage {
@@ -75,7 +82,7 @@ impl Storage for JsonStorage {
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<(usize, Activity)>, Self::StorageError>
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<ActivityWithId>, Self::StorageError>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
@@ -84,7 +91,7 @@ impl Storage for JsonStorage {
         Ok(filtered.collect())
     }
 
-    fn get_finished_activities(&self) -> Result<Vec<(usize, Activity)>, Self::StorageError> {
+    fn get_finished_activities(&self) -> Result<Vec<ActivityWithId>, Self::StorageError> {
         self.get_sorted_activities()
     }
 
@@ -106,33 +113,82 @@ impl Storage for JsonStorage {
         })
     }
 
-    fn get_current_activity(&self) -> Result<Option<OngoingActivity>, Self::StorageError> {
+    fn get_ongoing_activities(&self) -> Result<Vec<OngoingActivityWithId>, Self::StorageError> {
         if !Path::exists(&self.current_path) {
-            Ok(None)
+            Ok(vec![])
         } else {
             let file = File::open(&self.current_path)?;
-            let current_activity: OngoingActivity = serde_json::from_reader(file)?;
-            Ok(Some(current_activity))
+            let ongoing_activities: OngoingActivities = serde_json::from_reader(file)?;
+            Ok(ongoing_activities
+                .ongoing
+                .iter()
+                .cloned()
+                .sorted()
+                .enumerate()
+                .collect())
         }
     }
 
-    fn set_current_activity(
+    fn get_ongoing_activity(
+        &self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError> {
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let ongoing = ongoing_activities
+            .iter()
+            .find(|(a_id, _a)| *a_id == id)
+            .map(|(_a_id, a)| a);
+        Ok(ongoing.cloned())
+    }
+
+    fn add_ongoing_activity(
         &mut self,
         activity: OngoingActivity,
     ) -> Result<(), Self::StorageError> {
-        if Path::exists(&self.current_path) {
-            fs::remove_file(&self.current_path)?
-        }
-        let file = File::create(&self.current_path)?;
-        serde_json::to_writer(file, &activity)?;
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&self.current_path)?;
+        serde_json::to_writer(
+            file,
+            &OngoingActivities {
+                ongoing: ongoing_activities
+                    .iter()
+                    .map(|(_a_id, a)| a)
+                    .sorted()
+                    .cloned()
+                    .chain(std::iter::once(activity))
+                    .collect(),
+            },
+        )?;
         Ok(())
     }
 
-    fn reset_current_activity(&mut self) -> Result<Option<OngoingActivity>, Self::StorageError> {
-        let ongoing = self.get_current_activity()?;
-        if Path::exists(&self.current_path) {
-            fs::remove_file(&self.current_path)?
-        }
-        Ok(ongoing)
+    fn remove_ongoing_activity(
+        &mut self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError> {
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let (removed, kept): (Vec<OngoingActivityWithId>, Vec<OngoingActivityWithId>) =
+            ongoing_activities
+                .iter()
+                .cloned()
+                .partition(|(a_id, _a)| *a_id == id);
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&self.current_path)?;
+        let kept_without_id: Vec<OngoingActivity> =
+            kept.iter().cloned().sorted().map(|(_a_id, a)| a).collect();
+        serde_json::to_writer(
+            file,
+            &OngoingActivities {
+                ongoing: kept_without_id,
+            },
+        )?;
+        Ok(removed.first().cloned().map(|(_a_id, a)| a))
     }
 }

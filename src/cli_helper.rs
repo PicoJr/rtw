@@ -86,6 +86,13 @@ pub fn get_app() -> App<'static, 'static> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("default")
+                .long("default")
+                .required(false)
+                .help("use default config")
+                .hidden(true), // only useful for testing
+        )
+        .arg(
             Arg::with_name("dry-run")
                 .short("n")
                 .long("dry")
@@ -120,15 +127,26 @@ pub fn get_app() -> App<'static, 'static> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("stop").about("Stop activity").arg(
-                Arg::with_name("time")
-                    .multiple(true)
-                    .required(false)
-                    .help(concat!(
-                        "optional time clue e.g. 4min ago\n",
-                        "current time is used when omitted"
-                    )),
-            ),
+            SubCommand::with_name("stop")
+                .about("Stop activity")
+                .arg(
+                    Arg::with_name("time")
+                        .multiple(true)
+                        .required(false)
+                        .help(concat!(
+                            "optional time clue e.g. 4min ago\n",
+                            "current time is used when omitted"
+                        )),
+                )
+                .arg(
+                    Arg::with_name("id")
+                        .long("id")
+                        .takes_value(true)
+                        .help(concat!(
+                            "optional activity id\n",
+                            "current activity is stopped when omitted"
+                        )),
+                ),
         )
         .subcommand(
             SubCommand::with_name("summary")
@@ -223,7 +241,19 @@ pub fn get_app() -> App<'static, 'static> {
                 .about("Delete activity")
                 .arg(Arg::with_name("id").required(true).help("activity id")),
         )
-        .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
+        .subcommand(
+            SubCommand::with_name("cancel")
+                .about("cancel current activity")
+                .arg(
+                    Arg::with_name("id")
+                        .long("id")
+                        .takes_value(true)
+                        .help(concat!(
+                            "optional activity id\n",
+                            "current activity is stopped when omitted"
+                        )),
+                ),
+        )
         .subcommand(
             SubCommand::with_name("completion")
                 .about("generate completion file")
@@ -261,15 +291,31 @@ pub fn parse_track_args(
     split_time_range_from_tags(&values, clock)
 }
 
-pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
+pub fn parse_stop_args(
+    stop_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Option<ActivityId>)> {
+    let stopped_id_maybe = stop_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str))
+        .transpose()?;
     let time_arg = stop_m.values_of("time");
     if let Some(values) = time_arg {
         let values: Vec<String> = values.map(String::from).collect();
         let time_str = values.join(" ");
-        TimeTools::time_from_str(&time_str, clock)
+        let stop_time = TimeTools::time_from_str(&time_str, clock)?;
+        Ok((stop_time, stopped_id_maybe))
     } else {
-        Ok(Time::Now)
+        Ok((Time::Now, stopped_id_maybe))
     }
+}
+
+pub fn parse_cancel_args(cancel_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
+    let cancelled_id_maybe = cancel_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str))
+        .transpose()?;
+    Ok(cancelled_id_maybe)
 }
 
 pub fn parse_summary_args(

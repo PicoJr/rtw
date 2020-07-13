@@ -26,42 +26,65 @@ impl<S> ActivityService for Service<S>
 where
     S: Storage,
 {
-    fn get_current_activity(&self) -> anyhow::Result<Option<OngoingActivity>> {
-        self.storage.get_current_activity().map_err(|e| e.into())
+    fn get_ongoing_activities(&self) -> anyhow::Result<Vec<(ActivityId, OngoingActivity)>> {
+        self.storage.get_ongoing_activities().map_err(|e| e.into())
+    }
+
+    fn get_ongoing_activity(&self, id: ActivityId) -> anyhow::Result<Option<OngoingActivity>> {
+        self.storage.get_ongoing_activity(id).map_err(|e| e.into())
     }
 
     fn start_activity(
         &mut self,
         activity: OngoingActivity,
         deny_overlapping: bool,
-    ) -> anyhow::Result<OngoingActivity> {
+    ) -> anyhow::Result<(OngoingActivity, Option<Activity>)> {
         let finished = self.storage.get_finished_activities()?;
-        let intersections = time_intersections(finished.as_slice(), &activity.start_time);
-        if !deny_overlapping || intersections.is_empty() {
-            self.stop_current_activity(activity.start_time, true)?;
-            self.storage.set_current_activity(activity.clone())?;
-            Ok(activity)
+        if deny_overlapping {
+            let intersections = time_intersections(finished.as_slice(), &activity.start_time);
+            if intersections.is_empty() {
+                let ongoing_activities = self.storage.get_ongoing_activities()?;
+                match ongoing_activities.as_slice() {
+                    [] => {
+                        self.storage.add_ongoing_activity(activity.clone())?;
+                        Ok((activity, None))
+                    }
+                    [(ongoing_id, _ongoing)] => {
+                        let stopped_maybe =
+                            self.stop_ongoing_activity(activity.start_time, *ongoing_id, true)?;
+                        self.storage.add_ongoing_activity(activity.clone())?;
+                        Ok((activity, stopped_maybe))
+                    }
+                    _ => Err(anyhow!(
+                        "multiple ongoing activities but overlapping is disabled"
+                    )),
+                }
+            } else {
+                Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+            }
         } else {
-            Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+            self.storage.add_ongoing_activity(activity.clone())?;
+            Ok((activity, None))
         }
     }
 
-    fn stop_current_activity(
+    fn stop_ongoing_activity(
         &mut self,
         time: DateTimeW,
+        id: ActivityId,
         deny_overlapping: bool,
     ) -> anyhow::Result<Option<Activity>> {
-        let current = self.storage.get_current_activity()?;
-        match current {
+        let stopped_maybe = self.storage.get_ongoing_activity(id)?;
+        match stopped_maybe {
             None => Ok(None),
-            Some(current_activity) => {
-                let stopped = current_activity.clone().into_activity(time)?;
+            Some(ongoing_activity) => {
+                let stopped = ongoing_activity.clone().into_activity(time)?;
                 let finished = self.storage.get_finished_activities()?;
                 let intersections = activity_intersections(finished.as_slice(), &stopped);
                 if !deny_overlapping || intersections.is_empty() {
                     self.storage.write_activity(stopped)?;
-                    self.storage.reset_current_activity()?;
-                    Ok(Some(current_activity.into_activity(time)?))
+                    self.storage.remove_ongoing_activity(id)?;
+                    Ok(Some(ongoing_activity.into_activity(time)?))
                 } else {
                     Err(anyhow!("{:?} would overlap {:?}", stopped, intersections))
                 }
@@ -69,8 +92,13 @@ where
         }
     }
 
-    fn cancel_current_activity(&mut self) -> anyhow::Result<Option<OngoingActivity>> {
-        self.storage.reset_current_activity().map_err(|e| e.into())
+    fn cancel_ongoing_activity(
+        &mut self,
+        id: ActivityId,
+    ) -> anyhow::Result<Option<OngoingActivity>> {
+        self.storage
+            .remove_ongoing_activity(id)
+            .map_err(|e| e.into())
     }
 
     fn filter_activities<P>(&self, p: P) -> anyhow::Result<Vec<(ActivityId, Activity)>>
@@ -148,9 +176,9 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         assert!(service
-            .stop_current_activity(clock.get_time(), true)
+            .stop_ongoing_activity(clock.get_time(), 0, true)
             .is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
+        assert!(service.get_ongoing_activities().unwrap().is_empty());
     }
 
     #[test]
@@ -159,7 +187,7 @@ mod tests {
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
         assert!(service
-            .stop_current_activity(clock.get_time(), true)
+            .stop_ongoing_activity(clock.get_time(), 0, true)
             .is_ok());
         let start = service.start_activity(
             OngoingActivity {
@@ -169,9 +197,9 @@ mod tests {
             true,
         );
         start.unwrap();
-        let current = service.get_current_activity();
+        let current = service.get_ongoing_activities();
         assert!(current.is_ok());
-        assert!(current.unwrap().is_some());
+        assert!(!current.unwrap().is_empty());
     }
 
     #[test]
@@ -187,11 +215,11 @@ mod tests {
             true,
         );
         start.unwrap();
-        assert!(service.get_current_activity().unwrap().is_some());
+        assert!(!service.get_ongoing_activities().unwrap().is_empty());
         assert!(service
-            .stop_current_activity(clock.get_time(), true)
+            .stop_ongoing_activity(clock.get_time(), 0, true)
             .is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
+        assert!(service.get_ongoing_activities().unwrap().is_empty());
     }
 
     #[test]
@@ -207,10 +235,10 @@ mod tests {
             true,
         );
         assert!(start_0.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
-        let stop = service.stop_current_activity(clock.get_time(), true);
+        assert!(!service.get_ongoing_activities().unwrap().is_empty());
+        let stop = service.stop_ongoing_activity(clock.get_time(), 0, true);
         assert!(stop.is_ok());
-        assert!(service.get_current_activity().unwrap().is_none());
+        assert!(service.get_ongoing_activities().unwrap().is_empty());
         let start_1 = service.start_activity(
             OngoingActivity {
                 start_time: clock.get_time(),
@@ -219,7 +247,7 @@ mod tests {
             true,
         );
         assert!(start_1.is_ok());
-        assert!(service.get_current_activity().unwrap().is_some());
+        assert!(!service.get_ongoing_activities().unwrap().is_empty());
     }
 
     #[test]
@@ -282,11 +310,12 @@ mod tests {
         );
         let started = service.start_activity(other, true);
         assert!(started.is_ok());
-        let stopped = service.stop_current_activity(
+        let stopped = service.stop_ongoing_activity(
             Local
                 .datetime_from_str("2020-12-25T09:30:00", "%Y-%m-%dT%H:%M:%S")
                 .unwrap()
                 .into(),
+            0, // only one ongoing activity => id is 0
             true,
         );
         assert!(stopped.is_err());
@@ -313,11 +342,14 @@ mod tests {
         let activity_start: DateTimeW = today.and_hms(8, 30, 0).into();
         let activity_end: DateTimeW = today.and_hms(8, 45, 0).into();
         let range_end: DateTimeW = today.and_hms(9, 0, 0).into();
-        let _start = service.start_activity(
-            OngoingActivity::new(activity_start, vec![String::from("a")]),
-            true,
-        );
-        let _stop = service.stop_current_activity(activity_end, true);
+        service
+            .track_activity(
+                OngoingActivity::new(activity_start, vec![])
+                    .into_activity(activity_end)
+                    .unwrap(),
+                true,
+            )
+            .unwrap();
         let activities = service.filter_activities(|(_id, a)| {
             range_start <= a.get_start_time() && a.get_start_time() <= range_end
         });
@@ -333,11 +365,14 @@ mod tests {
         let activity_start: DateTimeW = today.and_hms(8, 30, 0).into();
         let activity_end: DateTimeW = today.and_hms(8, 45, 0).into();
         let range_end: DateTimeW = today.and_hms(10, 0, 0).into();
-        let _start = service.start_activity(
-            OngoingActivity::new(activity_start, vec![String::from("a")]),
-            true,
-        );
-        let _stop = service.stop_current_activity(activity_end, true);
+        service
+            .track_activity(
+                OngoingActivity::new(activity_start, vec![])
+                    .into_activity(activity_end)
+                    .unwrap(),
+                true,
+            )
+            .unwrap();
         let activities = service.filter_activities(|(_id, a)| {
             range_start <= a.get_start_time() && a.get_start_time() <= range_end
         });

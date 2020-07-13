@@ -55,12 +55,25 @@ impl PartialOrd for Activity {
 }
 
 /// A started and unfinished activity (no stop time)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OngoingActivity {
     /// start time
     pub start_time: DateTimeW,
     /// Activity tags
     pub tags: Tags,
+}
+
+/// OngoingActivities are sorted by start time
+impl Ord for OngoingActivity {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.get_start_time().cmp(&other.get_start_time())
+    }
+}
+
+impl PartialOrd for OngoingActivity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl OngoingActivity {

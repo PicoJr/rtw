@@ -452,6 +452,7 @@ mod tests {
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
+            .arg("--default") // use default config ie deny overlapping
             .arg("track")
             .arg("09:30")
             .arg("-")

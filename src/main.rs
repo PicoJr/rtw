@@ -5,7 +5,7 @@ use crate::chrono_clock::ChronoClock;
 use crate::cli_helper::get_app;
 use crate::json_storage::JsonStorage;
 use crate::rtw_cli::{dry_run_action, run, run_mutation};
-use crate::rtw_config::load_config;
+use crate::rtw_config::{load_config, RTWConfig};
 use crate::service::Service;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -24,10 +24,14 @@ mod time_tools;
 mod timeline;
 
 fn main() -> anyhow::Result<()> {
-    let config = load_config()?;
     let clock = ChronoClock {};
     let app = get_app();
     let matches = app.get_matches();
+    let config = if matches.is_present("default") {
+        RTWConfig::default()
+    } else {
+        load_config()?
+    };
     let storage_dir = match matches.value_of("directory") {
         None => config.storage_dir_path.clone(),
         Some(dir_str) => PathBuf::from_str(dir_str).expect("invalid directory"),
