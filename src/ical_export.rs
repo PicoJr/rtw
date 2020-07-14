@@ -18,7 +18,7 @@ impl From<Activity> for Event {
         let start_time = a.get_start_time();
         let stop_time = a.get_stop_time();
         let title = a.get_title();
-        let event = match a.get_description() {
+        match a.get_description() {
             None => Event::new()
                 .summary(title.as_str())
                 .starts(start_time)
@@ -30,8 +30,7 @@ impl From<Activity> for Event {
                 .starts(start_time)
                 .ends(stop_time)
                 .done(),
-        };
-        event
+        }
     }
 }
 
