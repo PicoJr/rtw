@@ -32,6 +32,10 @@
       * [Track a finished activity](#track-a-finished-activity)
          * [Track a finished activity with dates](#track-a-finished-activity-with-dates)
          * [Track a finished activity the same day](#track-a-finished-activity-the-same-day)
+      * [Track an activity and provide a long description](#track-an-activity-and-provide-a-long-description)
+      * [For multitasking people](#for-multitasking-people)
+         * [Start (overlapping) activities](#start-overlapping-activities)
+         * [Stop ongoing activity](#stop-ongoing-activity)
 
 <!--te-->
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
@@ -206,8 +210,6 @@ Example output:
 
 ## Display a timeline
 
-:warning: does not work if some activities are overlapping.
-
 ### For the day
 
 ```bash
@@ -341,4 +343,79 @@ Recorded write doc
 Started 2020-03-14T09:00:00
 Ended   2020-03-14T10:00:00
 Total   01:00:00
+```
+
+## Track an activity and provide a long description
+
+Example:
+
+```
+rtw track 9 - 10 breakfast -d "I ate delicious pancakes"
+rtw summary -d
+```
+
+output:
+```
+breakfast 2020-07-11T09:00:00 2020-07-11T10:00:00 01:00:00
+I ate delicious pancakes
+```
+
+## For multitasking people
+
+Requires `deny_overlapping: false` in `rtw_config.json`
+
+### Start (overlapping) activities
+
+Example:
+
+```
+rtw start work
+rtw start child question -d "answer how fish can breath under water"
+rtw
+```
+
+Output:
+
+```
+./target/debug/rtw                                                                                                                                       PicoJr
+Tracking work
+Total    00:03:03
+Id       0
+Tracking child question
+Total    00:01:25
+Id       1
+```
+
+### Stop ongoing activity
+
+`--id` is only required when ongoing activities > 1.
+
+Example:
+
+```
+rtw stop --id 1
+```
+
+Output:
+
+```                                                                                                                        PicoJr
+Recorded child question
+Started 2020-07-14T10:54:36
+Ended   2020-07-14T10:57:23
+Total   00:02:47
+```
+
+stop the other remaining ongoing activity:
+
+```
+rtw stop
+```
+
+Output:
+
+```
+Recorded work
+Started 2020-07-14T10:52:58
+Ended   2020-07-14T11:00:17
+Total   00:07:18
 ```

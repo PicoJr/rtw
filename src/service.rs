@@ -208,11 +208,12 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
-        let start = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-            description: None,
-        },
+        let start = service.start_activity(
+            OngoingActivity {
+                start_time: clock.get_time(),
+                tags: vec![String::from("a")],
+                description: None,
+            },
             true,
         );
         start.unwrap();
@@ -228,11 +229,12 @@ mod tests {
         let clock = ChronoClock {};
         let test_dir = tempdir().expect("error while creating tempdir");
         let mut service = build_json_service(&test_dir);
-        let start_0 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("a")],
-            description: None,
-        },
+        let start_0 = service.start_activity(
+            OngoingActivity {
+                start_time: clock.get_time(),
+                tags: vec![String::from("a")],
+                description: None,
+            },
             true,
         );
         assert!(start_0.is_ok());
@@ -240,11 +242,12 @@ mod tests {
         let stop = service.stop_ongoing_activity(clock.get_time(), 0, true);
         assert!(stop.is_ok());
         assert!(service.get_ongoing_activities().unwrap().is_empty());
-        let start_1 = service.start_activity(OngoingActivity {
-            start_time: clock.get_time(),
-            tags: vec![String::from("b")],
-            description: None,
-        },
+        let start_1 = service.start_activity(
+            OngoingActivity {
+                start_time: clock.get_time(),
+                tags: vec![String::from("b")],
+                description: None,
+            },
             true,
         );
         assert!(start_1.is_ok());
