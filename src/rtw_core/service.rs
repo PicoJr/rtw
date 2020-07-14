@@ -19,7 +19,7 @@ pub trait ActivityService {
     ///
     /// May fail depending on backend implementation
     ///
-    /// Returns new current activity
+    /// Returns new current activity and optionally the previously ongoing activity
     fn start_activity(
         &mut self,
         activity: OngoingActivity,

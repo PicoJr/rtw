@@ -25,10 +25,21 @@ fn main() -> anyhow::Result<()> {
     let clock = ChronoClock {};
     let app = get_app();
     let matches = app.get_matches();
+    let config = load_config()?;
     let config = if matches.is_present("default") {
         RTWConfig::default()
     } else {
-        load_config()?
+        config
+    };
+    let config = if matches.is_present("overlap") {
+        config.deny_overlapping(false)
+    } else {
+        config
+    };
+    let config = if matches.is_present("no_overlap") {
+        config.deny_overlapping(true)
+    } else {
+        config
     };
     let storage_dir = match matches.value_of("directory") {
         None => config.storage_dir_path.clone(),

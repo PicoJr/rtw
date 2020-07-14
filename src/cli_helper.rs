@@ -93,6 +93,22 @@ pub fn get_app() -> App<'static, 'static> {
                 .hidden(true), // only useful for testing
         )
         .arg(
+            Arg::with_name("overlap")
+                .long("overlap")
+                .required(false)
+                .conflicts_with("default")
+                .conflicts_with("no_overlap")
+                .help("allow overlapping activities"),
+        )
+        .arg(
+            Arg::with_name("no_overlap")
+                .long("no_overlap")
+                .required(false)
+                .conflicts_with("overlap")
+                .conflicts_with("default")
+                .help("disallow overlapping activities"),
+        )
+        .arg(
             Arg::with_name("dry-run")
                 .short("n")
                 .long("dry")

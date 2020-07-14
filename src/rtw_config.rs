@@ -31,6 +31,14 @@ impl RTWConfig {
             deny_overlapping: true,
         }
     }
+
+    pub fn deny_overlapping(self, deny: bool) -> Self {
+        RTWConfig {
+            storage_dir_path: self.storage_dir_path,
+            timeline_colors: self.timeline_colors,
+            deny_overlapping: deny,
+        }
+    }
 }
 
 fn load_config_from_config_dir(
