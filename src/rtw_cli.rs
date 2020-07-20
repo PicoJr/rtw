@@ -293,7 +293,24 @@ where
                 })
                 .cloned()
                 .collect();
-            let rendered = render_days(activities.as_slice(), &config.timeline_colors)?;
+            let now = clock.get_time();
+            let ongoing_activities = service.get_ongoing_activities()?;
+            let ongoing_activities: Vec<ActivityWithId> = ongoing_activities
+                .iter()
+                .filter(|(_i, a)| {
+                    range_start <= a.get_start_time() && a.get_start_time() <= range_end
+                })
+                .filter_map(|(i, a)| match a.clone().into_activity(now) {
+                    Ok(a) => Some((*i, a)),
+                    _ => None,
+                })
+                .collect();
+            let timeline_activities: Vec<ActivityWithId> = activities
+                .iter()
+                .cloned()
+                .chain(ongoing_activities.iter().cloned())
+                .collect();
+            let rendered = render_days(timeline_activities.as_slice(), &config.timeline_colors)?;
             for line in rendered {
                 println!("{}", line);
             }
