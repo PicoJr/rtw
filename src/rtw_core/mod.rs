@@ -17,3 +17,5 @@ pub type Tag = String;
 pub type Tags = Vec<Tag>;
 /// `ActivityId` = `usize`
 pub type ActivityId = usize;
+/// `Description` = `String`
+pub type Description = String;

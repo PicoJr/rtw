@@ -388,6 +388,23 @@ mod tests {
     }
 
     #[test]
+    fn track_relative_time_am_pm() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09am")
+            .arg("-")
+            .arg("10am")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+    }
+
+    #[test]
     fn track_relative_missing_end() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
@@ -418,7 +435,7 @@ mod tests {
     }
 
     #[test]
-    fn track_overlap() {
+    fn track_overlap_not_allowed() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
         let mut cmd = Command::cargo_bin("rtw").unwrap();
@@ -435,6 +452,7 @@ mod tests {
         let mut cmd = Command::cargo_bin("rtw").unwrap();
         cmd.arg("-d")
             .arg(test_dir_path)
+            .arg("--no_overlap") // deny overlapping
             .arg("track")
             .arg("09:30")
             .arg("-")
@@ -443,6 +461,35 @@ mod tests {
             .assert()
             .failure()
             .stderr(predicates::str::contains("would overlap"));
+    }
+
+    #[test]
+    fn track_overlap_allowed() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("--overlap") // deny overlapping
+            .arg("track")
+            .arg("09:30")
+            .arg("-")
+            .arg("11:00")
+            .arg("bar")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded bar"));
     }
 
     #[test]

@@ -3,7 +3,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 
 use crate::rtw_core::clock::{Clock, Time};
 use crate::rtw_core::datetimew::DateTimeW;
-use crate::rtw_core::{ActivityId, Tags};
+use crate::rtw_core::{ActivityId, Description, Tags};
 use crate::time_tools::TimeTools;
 use std::str::FromStr;
 
@@ -86,6 +86,29 @@ pub fn get_app() -> App<'static, 'static> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("default")
+                .long("default")
+                .required(false)
+                .help("use default config")
+                .hidden(true), // only useful for testing
+        )
+        .arg(
+            Arg::with_name("overlap")
+                .long("overlap")
+                .required(false)
+                .conflicts_with("default")
+                .conflicts_with("no_overlap")
+                .help("allow overlapping activities"),
+        )
+        .arg(
+            Arg::with_name("no_overlap")
+                .long("no_overlap")
+                .required(false)
+                .conflicts_with("overlap")
+                .conflicts_with("default")
+                .help("disallow overlapping activities"),
+        )
+        .arg(
             Arg::with_name("dry-run")
                 .short("n")
                 .long("dry")
@@ -103,6 +126,13 @@ pub fn get_app() -> App<'static, 'static> {
                             "optional time clue followed by at least 1 tag\n",
                             "e.g '4 min ago foo' or '09:00 foo' or 'foo' "
                         )),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .long("description")
+                        .takes_value(true)
+                        .help("long activity description"),
                 ),
         )
         .subcommand(
@@ -117,18 +147,36 @@ pub fn get_app() -> App<'static, 'static> {
                             "start - end tags...\n",
                             "e.g '09:00 - 10:00 foo' "
                         )),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .long("description")
+                        .takes_value(true)
+                        .help("long activity description"),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("stop").about("Stop activity").arg(
-                Arg::with_name("time")
-                    .multiple(true)
-                    .required(false)
-                    .help(concat!(
-                        "optional time clue e.g. 4min ago\n",
-                        "current time is used when omitted"
-                    )),
-            ),
+            SubCommand::with_name("stop")
+                .about("Stop activity")
+                .arg(
+                    Arg::with_name("time")
+                        .multiple(true)
+                        .required(false)
+                        .help(concat!(
+                            "optional time clue e.g. 4min ago\n",
+                            "current time is used when omitted"
+                        )),
+                )
+                .arg(
+                    Arg::with_name("id")
+                        .long("id")
+                        .takes_value(true)
+                        .help(concat!(
+                            "optional activity id\n",
+                            "current activity is stopped when omitted"
+                        )),
+                ),
         )
         .subcommand(
             SubCommand::with_name("summary")
@@ -163,6 +211,12 @@ pub fn get_app() -> App<'static, 'static> {
                     Arg::with_name("id")
                         .long("id")
                         .help("display activities id"),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("d")
+                        .long("description")
+                        .help("display activities descriptions"),
                 ),
         )
         .subcommand(
@@ -223,7 +277,19 @@ pub fn get_app() -> App<'static, 'static> {
                 .about("Delete activity")
                 .arg(Arg::with_name("id").required(true).help("activity id")),
         )
-        .subcommand(SubCommand::with_name("cancel").about("cancel current activity"))
+        .subcommand(
+            SubCommand::with_name("cancel")
+                .about("cancel current activity")
+                .arg(
+                    Arg::with_name("id")
+                        .long("id")
+                        .takes_value(true)
+                        .help(concat!(
+                            "optional activity id\n",
+                            "current activity is stopped when omitted"
+                        )),
+                ),
+        )
         .subcommand(
             SubCommand::with_name("completion")
                 .about("generate completion file")
@@ -236,7 +302,11 @@ pub fn get_app() -> App<'static, 'static> {
         )
 }
 
-pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<(Time, Tags)> {
+pub fn parse_start_args(
+    start_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Tags, Option<Description>)> {
+    let description = start_m.value_of("description").map(|s| s.to_string());
     let values_arg = start_m.values_of("tokens"); // optional time clue, tags
     if let Some(values) = values_arg {
         let values: Tags = values.map(String::from).collect();
@@ -244,7 +314,7 @@ pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Resu
         return if tags.is_empty() {
             Err(anyhow::anyhow!("no tags provided"))
         } else {
-            Ok((time, tags))
+            Ok((time, tags, description))
         };
     }
     Err(anyhow::anyhow!("neither time clue nor tags provided")) // it should be prevented by clap
@@ -253,30 +323,49 @@ pub fn parse_start_args(start_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Resu
 pub fn parse_track_args(
     track_m: &ArgMatches,
     clock: &dyn Clock,
-) -> anyhow::Result<(Time, Time, Tags)> {
+) -> anyhow::Result<(Time, Time, Tags, Option<Description>)> {
+    let description = track_m.value_of("description").map(|s| s.to_string());
     let values_arg = track_m
         .values_of("tokens")
         .expect("start time, end time and at least 1 tag required");
     let values: Tags = values_arg.map(String::from).collect();
-    split_time_range_from_tags(&values, clock)
+    let (range_start, range_end, activity_tags) = split_time_range_from_tags(&values, clock)?;
+    Ok((range_start, range_end, activity_tags, description))
 }
 
-pub fn parse_stop_args(stop_m: &ArgMatches, clock: &dyn Clock) -> anyhow::Result<Time> {
+pub fn parse_stop_args(
+    stop_m: &ArgMatches,
+    clock: &dyn Clock,
+) -> anyhow::Result<(Time, Option<ActivityId>)> {
+    let stopped_id_maybe = stop_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str))
+        .transpose()?;
     let time_arg = stop_m.values_of("time");
     if let Some(values) = time_arg {
         let values: Vec<String> = values.map(String::from).collect();
         let time_str = values.join(" ");
-        TimeTools::time_from_str(&time_str, clock)
+        let stop_time = TimeTools::time_from_str(&time_str, clock)?;
+        Ok((stop_time, stopped_id_maybe))
     } else {
-        Ok(Time::Now)
+        Ok((Time::Now, stopped_id_maybe))
     }
+}
+
+pub fn parse_cancel_args(cancel_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
+    let cancelled_id_maybe = cancel_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str))
+        .transpose()?;
+    Ok(cancelled_id_maybe)
 }
 
 pub fn parse_summary_args(
     summary_m: &ArgMatches,
     clock: &dyn Clock,
-) -> anyhow::Result<((DateTimeW, DateTimeW), bool)> {
+) -> anyhow::Result<((DateTimeW, DateTimeW), bool, bool)> {
     let display_id = summary_m.is_present("id");
+    let display_description = summary_m.is_present("description");
     let values_arg = summary_m.values_of("tokens");
     if let Some(values) = values_arg {
         let values: Vec<String> = values.map(String::from).collect();
@@ -285,7 +374,7 @@ pub fn parse_summary_args(
             Ok((range_start, range_end)) => {
                 let range_start = clock.date_time(range_start);
                 let range_end = clock.date_time(range_end);
-                Ok(((range_start, range_end), display_id))
+                Ok(((range_start, range_end), display_id, display_description))
             }
             Err(e) => Err(anyhow::anyhow!(e)),
         };
@@ -301,7 +390,7 @@ pub fn parse_summary_args(
             clock.today_range()
         }
     };
-    Ok((range, display_id))
+    Ok((range, display_id, display_description))
 }
 
 pub fn parse_timeline_args(

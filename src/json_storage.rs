@@ -2,13 +2,31 @@
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
-use std::fs;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 type Activities = Vec<Activity>;
 type ActivityWithId = (ActivityId, Activity);
+type OngoingActivityWithId = (ActivityId, OngoingActivity);
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct FinishedActivities {
+    #[serde(default)]
+    pub semver: Option<String>,
+    pub activities: Activities,
+}
+
+impl Default for FinishedActivities {
+    fn default() -> Self {
+        FinishedActivities {
+            semver: Some(crate_version!().to_string()),
+            activities: vec![],
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
@@ -23,6 +41,11 @@ pub struct JsonStorage {
     finished_path: PathBuf,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OngoingActivities {
+    ongoing: Vec<OngoingActivity>,
+}
+
 impl JsonStorage {
     pub fn new(current_path: PathBuf, finished_path: PathBuf) -> Self {
         JsonStorage {
@@ -31,25 +54,37 @@ impl JsonStorage {
         }
     }
 
-    fn get_finished_activities(&self) -> Result<Vec<Activity>, JsonStorageError> {
+    fn get_finished_activities(&self) -> Result<FinishedActivities, JsonStorageError> {
         if Path::exists(&self.finished_path) {
             let file = OpenOptions::new()
                 .read(true)
                 .write(false)
                 .open(&self.finished_path)?;
-            let finished_activities: Activities = serde_json::from_reader(file)?;
-            Ok(finished_activities)
+            let finished_activities: serde_json::error::Result<FinishedActivities> =
+                serde_json::from_reader(file);
+            finished_activities.or_else(|_| {
+                let file = OpenOptions::new()
+                    .read(true)
+                    .write(false)
+                    .open(&self.finished_path)?;
+                // try to parse legacy format.
+                let activities: Activities = serde_json::from_reader(file)?;
+                Ok(FinishedActivities {
+                    semver: None,
+                    activities,
+                })
+            })
         } else {
-            Ok(vec![])
+            Ok(FinishedActivities::default())
         }
     }
 
     fn get_sorted_activities(&self) -> Result<Vec<(ActivityId, Activity)>, JsonStorageError> {
         let mut finished_activities = self.get_finished_activities()?;
-        finished_activities.sort();
-        Ok((0..finished_activities.len())
+        finished_activities.activities.sort();
+        Ok((0..finished_activities.activities.len())
             .rev()
-            .zip(finished_activities)
+            .zip(finished_activities.activities)
             .collect())
     }
 }
@@ -61,21 +96,26 @@ impl Storage for JsonStorage {
         if !Path::exists(&self.finished_path) {
             let file = File::create(&self.finished_path)?;
             let activities: Activities = vec![activity];
-            serde_json::to_writer(file, &activities)?;
+            let finished_activities = FinishedActivities {
+                semver: Some(crate_version!().to_string()),
+                activities,
+            };
+            serde_json::to_writer(file, &finished_activities)?;
             Ok(())
         } else {
-            let mut activities = self.get_finished_activities()?;
-            activities.push(activity);
+            let mut finished_activities = self.get_finished_activities()?;
+            finished_activities.activities.push(activity);
             let file = OpenOptions::new()
                 .write(true)
                 .truncate(true)
                 .open(&self.finished_path)?;
-            serde_json::to_writer(file, &activities)?;
+            finished_activities.semver = Some(crate_version!().to_string());
+            serde_json::to_writer(file, &finished_activities)?;
             Ok(())
         }
     }
 
-    fn filter_activities<P>(&self, p: P) -> Result<Vec<(usize, Activity)>, Self::StorageError>
+    fn filter_activities<P>(&self, p: P) -> Result<Vec<ActivityWithId>, Self::StorageError>
     where
         P: Fn(&(ActivityId, Activity)) -> bool,
     {
@@ -84,7 +124,7 @@ impl Storage for JsonStorage {
         Ok(filtered.collect())
     }
 
-    fn get_finished_activities(&self) -> Result<Vec<(usize, Activity)>, Self::StorageError> {
+    fn get_finished_activities(&self) -> Result<Vec<ActivityWithId>, Self::StorageError> {
         self.get_sorted_activities()
     }
 
@@ -106,33 +146,82 @@ impl Storage for JsonStorage {
         })
     }
 
-    fn get_current_activity(&self) -> Result<Option<OngoingActivity>, Self::StorageError> {
+    fn get_ongoing_activities(&self) -> Result<Vec<OngoingActivityWithId>, Self::StorageError> {
         if !Path::exists(&self.current_path) {
-            Ok(None)
+            Ok(vec![])
         } else {
             let file = File::open(&self.current_path)?;
-            let current_activity: OngoingActivity = serde_json::from_reader(file)?;
-            Ok(Some(current_activity))
+            let ongoing_activities: OngoingActivities = serde_json::from_reader(file)?;
+            Ok(ongoing_activities
+                .ongoing
+                .iter()
+                .cloned()
+                .sorted()
+                .enumerate()
+                .collect())
         }
     }
 
-    fn set_current_activity(
+    fn get_ongoing_activity(
+        &self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError> {
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let ongoing = ongoing_activities
+            .iter()
+            .find(|(a_id, _a)| *a_id == id)
+            .map(|(_a_id, a)| a);
+        Ok(ongoing.cloned())
+    }
+
+    fn add_ongoing_activity(
         &mut self,
         activity: OngoingActivity,
     ) -> Result<(), Self::StorageError> {
-        if Path::exists(&self.current_path) {
-            fs::remove_file(&self.current_path)?
-        }
-        let file = File::create(&self.current_path)?;
-        serde_json::to_writer(file, &activity)?;
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&self.current_path)?;
+        serde_json::to_writer(
+            file,
+            &OngoingActivities {
+                ongoing: ongoing_activities
+                    .iter()
+                    .map(|(_a_id, a)| a)
+                    .sorted()
+                    .cloned()
+                    .chain(std::iter::once(activity))
+                    .collect(),
+            },
+        )?;
         Ok(())
     }
 
-    fn reset_current_activity(&mut self) -> Result<Option<OngoingActivity>, Self::StorageError> {
-        let ongoing = self.get_current_activity()?;
-        if Path::exists(&self.current_path) {
-            fs::remove_file(&self.current_path)?
-        }
-        Ok(ongoing)
+    fn remove_ongoing_activity(
+        &mut self,
+        id: ActivityId,
+    ) -> Result<Option<OngoingActivity>, Self::StorageError> {
+        let ongoing_activities = self.get_ongoing_activities()?;
+        let (removed, kept): (Vec<OngoingActivityWithId>, Vec<OngoingActivityWithId>) =
+            ongoing_activities
+                .iter()
+                .cloned()
+                .partition(|(a_id, _a)| *a_id == id);
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&self.current_path)?;
+        let kept_without_id: Vec<OngoingActivity> =
+            kept.iter().cloned().sorted().map(|(_a_id, a)| a).collect();
+        serde_json::to_writer(
+            file,
+            &OngoingActivities {
+                ongoing: kept_without_id,
+            },
+        )?;
+        Ok(removed.first().cloned().map(|(_a_id, a)| a))
     }
 }

@@ -49,13 +49,21 @@ fn split_interval_if_needed(interval: &Interval) -> (Interval, Option<Interval>)
         } else {
             (same_day_midnight, start_time)
         };
-        let same_day_to_midnight = OngoingActivity::new(same_day_start.into(), activity.get_tags())
-            .into_activity(same_day_end.into())
-            .unwrap(); // safe to unwrap thanks to previous test: same_day_start <= same_day_end
+        let same_day_to_midnight = OngoingActivity::new(
+            same_day_start.into(),
+            activity.get_tags(),
+            activity.get_description(),
+        )
+        .into_activity(same_day_end.into())
+        .unwrap(); // safe to unwrap thanks to previous test: same_day_start <= same_day_end
         let day_after: DateTime<Local> = start_time.date().and_hms(0, 0, 0) + Duration::days(1);
-        let other_days = OngoingActivity::new(day_after.into(), activity.get_tags())
-            .into_activity(stop_time.into())
-            .unwrap(); // safe to unwrap because stop_time >= day_after
+        let other_days = OngoingActivity::new(
+            day_after.into(),
+            activity.get_tags(),
+            activity.get_description(),
+        )
+        .into_activity(stop_time.into())
+        .unwrap(); // safe to unwrap because stop_time >= day_after
         (
             (*activity_id, same_day_to_midnight),
             Some((*activity_id, other_days)),
@@ -200,7 +208,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
         let total_string = total.to_string();
         let right_padding = total_string.len() + 1; // +1 space
         let available_length = max(0, width - right_padding as usize) as usize;
-        let timeline = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
+        let data = Renderer::new(day_activities.as_slice(), &bounds, &|a| label(a, colors))
             .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
@@ -222,18 +230,21 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
                 )),
             })?;
-        for (i, line) in legend.iter().enumerate() {
-            if i == 0 {
-                rendered.push(format!("{}{:>8}", line, day_month));
-            } else {
-                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+        let timeline = legend.iter().zip(data.iter());
+        for (i, (legend_timelines, data_timelines)) in timeline.enumerate() {
+            for line in legend_timelines {
+                if i == 0 {
+                    rendered.push(format!("{}{:>8}", line, day_month));
+                } else {
+                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                }
             }
-        }
-        for (i, line) in timeline.iter().enumerate() {
-            if i == 0 {
-                rendered.push(format!("{}{}", line, total_string));
-            } else {
-                rendered.push(format!("{}{:>8}", line, " ".to_string()));
+            for line in data_timelines {
+                if i == 0 {
+                    rendered.push(format!("{}{}", line, total_string));
+                } else {
+                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                }
             }
         }
     }
