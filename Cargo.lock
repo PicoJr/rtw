@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "rtw"
-version = "2.0.0-rc1"
+version = "2.0.0"
 dependencies = [
  "ansi_term 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
