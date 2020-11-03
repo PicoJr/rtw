@@ -52,6 +52,9 @@ fn main() -> anyhow::Result<()> {
         finished_activity_path,
     ));
 
+    if cfg!(windows) {
+        ansi_term::enable_ansi_support().unwrap_or(());
+    }
     let action = run(&matches, &clock)?;
     let mutation = dry_run_action(action, &service, &clock, &config)?;
     if matches.is_present("dry-run") {
