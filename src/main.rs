@@ -52,7 +52,8 @@ fn main() -> anyhow::Result<()> {
         finished_activity_path,
     ));
 
-    if cfg!(windows) {
+    #[cfg(windows)]
+    {
         ansi_term::enable_ansi_support().unwrap_or(());
     }
     let action = run(&matches, &clock)?;
