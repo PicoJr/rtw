@@ -17,6 +17,7 @@
          * [Display finished activities summary for last week](#display-finished-activities-summary-for-last-week)
          * [Display finished activities summary for range](#display-finished-activities-summary-for-range)
          * [Display finished activities id](#display-finished-activities-id)
+         * [Display a report (sum same activities)](#display-a-report-sum-same-activities)
       * [Display a timeline](#display-a-timeline)
          * [For the day](#for-the-day)
          * [For the week](#for-the-week)
@@ -207,6 +208,22 @@ Example output:
 ```
 
 > id 0 = last finished activity
+
+### Display a report (sum same activities)
+
+Example:
+```
+rtw track 8 - 9 foo
+rtw track 9 - 10 foo
+rtw track 10 - 11 bar
+rtw summary --report
+```
+
+Example output:
+```
+foo 02:00:00 (2 segments)
+bar 01:00:00 (1 segments)
+```
 
 ## Display a timeline
 

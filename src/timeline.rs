@@ -199,9 +199,9 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             .collect();
         let day_month = day_activities
             .first()
-            .and_then(|(_, a)| {
+            .map(|(_, a)| {
                 let start_time: DateTime<Local> = a.get_start_time().into();
-                Some(start_time.format("%d/%m").to_string())
+                start_time.format("%d/%m").to_string()
             })
             .unwrap_or_else(|| "??/??".to_string());
         let total: DurationW = DurationW::from(day_total(day_activities.as_slice()));
@@ -213,22 +213,22 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
-            .or_else(|e| match e {
-                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
-                TBLError::Intersection(left, right) => Err(anyhow!(
+            .map_err(|e| match e {
+                TBLError::NoBoundaries => anyhow!("failed to create timeline"),
+                TBLError::Intersection(left, right) => anyhow!(
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
-                )),
+                ),
             })?;
         let legend = Renderer::new(day_activities.as_slice(), &bounds, &legend)
             .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))
             .render()
-            .or_else(|e| match e {
-                TBLError::NoBoundaries => Err(anyhow!("failed to create timeline")),
-                TBLError::Intersection(left, right) => Err(anyhow!(
+            .map_err(|e| match e {
+                TBLError::NoBoundaries => anyhow!("failed to create timeline"),
+                TBLError::Intersection(left, right) => anyhow!(
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
-                )),
+                ),
             })?;
         let timeline = legend.iter().zip(data.iter());
         for (i, (legend_timelines, data_timelines)) in timeline.enumerate() {

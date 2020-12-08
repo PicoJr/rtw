@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://crates.io/crates/rtw/2.1.0) Dec 8, 2020
+
+* Add `--report` option to summary command.
+
 ## [2.0.1](https://crates.io/crates/rtw/2.0.1) Nov 3, 2020
 
 * Fix CLI output for Windows 10 cf [#43](https://github.com/PicoJr/rtw/pull/43) thanks [ythri](https://github.com/ythri)
