@@ -6,6 +6,7 @@ use crate::rtw_config::RTWConfig;
 use crate::rtw_core::activity::{Activity, OngoingActivity};
 use crate::rtw_core::clock::Clock;
 use crate::rtw_core::datetimew::DateTimeW;
+use crate::rtw_core::durationw::DurationW;
 use crate::rtw_core::service::ActivityService;
 use crate::rtw_core::storage::Storage;
 use crate::rtw_core::ActivityId;
@@ -13,6 +14,7 @@ use crate::rtw_core::{Description, Tags};
 use crate::service::Service;
 use crate::timeline::render_days;
 use clap::ArgMatches;
+use itertools::Itertools;
 
 type ActivityWithId = (ActivityId, Activity);
 
@@ -24,7 +26,7 @@ pub enum RTWAction {
     Start(DateTimeW, Tags, Option<Description>),
     Track((DateTimeW, DateTimeW), Tags, Option<Description>),
     Stop(DateTimeW, Option<ActivityId>),
-    Summary((DateTimeW, DateTimeW), bool, bool),
+    Summary((DateTimeW, DateTimeW), bool, bool, bool),
     DumpICal((DateTimeW, DateTimeW)),
     Continue,
     Delete(ActivityId),
@@ -46,6 +48,27 @@ enum OptionalOrAmbiguousOrNotFound {
     Optional(Option<(ActivityId, OngoingActivity)>),
     Ambiguous,
     NotFound(ActivityId),
+}
+
+fn merge_same_tags(activities: &[ActivityWithId]) -> Vec<(ActivityId, Activity, DurationW, usize)> {
+    let uniques: Vec<ActivityWithId> = activities
+        .iter()
+        .cloned()
+        .unique_by(|(_i, activity)| activity.get_title())
+        .collect();
+    uniques
+        .iter()
+        .cloned()
+        .map(|(i, activity)| {
+            let same_tag = activities
+                .iter()
+                .filter(|(_i, other)| activity.get_title() == other.get_title());
+            let durations: Vec<DurationW> = same_tag.map(|(_i, a)| a.get_duration()).collect();
+            let segments = durations.len();
+            let duration = durations.into_iter().sum();
+            (i, activity, duration, segments)
+        })
+        .collect()
 }
 
 fn get_ongoing_activity<S: Storage>(
@@ -90,12 +113,13 @@ where
             Ok(RTWAction::Stop(abs_stop_time, stopped_id_maybe))
         }
         ("summary", Some(sub_m)) => {
-            let ((range_start, range_end), display_id, display_description) =
+            let ((range_start, range_end), display_id, display_description, report) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
             Ok(RTWAction::Summary(
                 (range_start, range_end),
                 display_id,
                 display_description,
+                report,
             ))
         }
         ("timeline", Some(sub_m)) => {
@@ -128,7 +152,7 @@ where
             Ok(RTWAction::Cancel(cancelled_id_maybe))
         }
         ("dump", Some(sub_m)) => {
-            let ((range_start, range_end), _display_id, _description) =
+            let ((range_start, range_end), _display_id, _description, _report) =
                 cli_helper::parse_summary_args(sub_m, clock)?;
             Ok(RTWAction::DumpICal((range_start, range_end)))
         }
@@ -191,7 +215,7 @@ where
                 }
             }
         }
-        RTWAction::Summary((range_start, range_end), display_id, display_description) => {
+        RTWAction::Summary((range_start, range_end), display_id, display_description, report) => {
             let activities = service.get_finished_activities()?;
             let activities: Vec<(ActivityId, Activity)> = activities
                 .iter()
@@ -207,6 +231,25 @@ where
                 .unwrap_or_default();
             if activities.is_empty() {
                 println!("No filtered data found.");
+            } else if report {
+                let activities_report = merge_same_tags(activities.as_slice());
+                for (_id, finished, duration, segments) in activities_report {
+                    let singular_or_plural = if segments <= 1 {
+                        String::from("segment")
+                    } else {
+                        // segments > 1
+                        String::from("segments")
+                    };
+                    let output = format!(
+                        "{:width$} {} ({} {})",
+                        finished.get_title(),
+                        duration,
+                        segments,
+                        singular_or_plural,
+                        width = longest_title
+                    );
+                    println!("{}", output)
+                }
             } else {
                 for (id, finished) in activities {
                     let output = format!(
