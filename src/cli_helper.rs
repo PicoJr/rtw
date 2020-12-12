@@ -261,7 +261,15 @@ pub fn get_app() -> App<'static, 'static> {
                         .help("activities done this week"),
                 ),
         )
-        .subcommand(SubCommand::with_name("continue").about("Continue a finished activity"))
+        .subcommand(
+            SubCommand::with_name("continue")
+                .about("Continue a finished activity")
+                .arg(
+                    Arg::with_name("id")
+                        .required(false)
+                        .help("activity id (when id is not provided continue last activity)"),
+                ),
+        )
         .subcommand(SubCommand::with_name("day").about("Display the current day as a timeline"))
         .subcommand(SubCommand::with_name("week").about("Display the current week as a timeline"))
         .subcommand(
@@ -356,6 +364,14 @@ pub fn parse_stop_args(
     } else {
         Ok((Time::Now, stopped_id_maybe))
     }
+}
+
+pub fn parse_continue_args(continue_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
+    let continue_id_maybe = continue_m
+        .value_of("id")
+        .map(|id_str| usize::from_str(id_str))
+        .transpose()?;
+    Ok(continue_id_maybe)
 }
 
 pub fn parse_cancel_args(cancel_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
