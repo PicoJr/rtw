@@ -56,11 +56,17 @@ where
                         Ok((activity, stopped_maybe))
                     }
                     _ => Err(anyhow!(
-                        "multiple ongoing activities but overlapping is disabled"
+                        "multiple ongoing activities but overlapping is disabled\n\
+                        Tip: you can enable overlapping using `rtw --overlap (start|stop|track|...)`"
                     )),
                 }
             } else {
-                Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+                Err(anyhow!(
+                    "{:?} would overlap {:?}\n\
+                Tip: you can enable overlapping using `rtw --overlap (start|stop|track|...)`",
+                    activity,
+                    intersections
+                ))
             }
         } else {
             self.storage.add_ongoing_activity(activity.clone())?;
@@ -86,7 +92,12 @@ where
                     self.storage.remove_ongoing_activity(id)?;
                     Ok(Some(ongoing_activity.into_activity(time)?))
                 } else {
-                    Err(anyhow!("{:?} would overlap {:?}", stopped, intersections))
+                    Err(anyhow!(
+                        "{:?} would overlap {:?}\n\
+                    Tip: you can enable overlapping using `rtw --overlap (start|stop|track|...)`",
+                        stopped,
+                        intersections
+                    ))
                 }
             }
         }
@@ -127,7 +138,12 @@ where
             self.storage.write_activity(activity.clone())?;
             Ok(activity)
         } else {
-            Err(anyhow!("{:?} would overlap {:?}", activity, intersections))
+            Err(anyhow!(
+                "{:?} would overlap {:?}\n\
+            Tip: you can enable overlapping using `rtw --overlap (start|stop|track|...)`",
+                activity,
+                intersections
+            ))
         }
     }
 }
