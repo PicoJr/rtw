@@ -24,7 +24,7 @@ pub struct RTWConfig {
 
 impl RTWConfig {
     pub fn default() -> Self {
-        let home_dir = dirs::home_dir().expect("could not find home dir");
+        let home_dir = dirs_next::home_dir().expect("could not find home dir");
         RTWConfig {
             storage_dir_path: home_dir, // stores finished activities
             timeline_colors: vec![(183, 28, 28), (26, 35, 126), (0, 77, 64), (38, 50, 56)],
@@ -61,7 +61,7 @@ fn load_config_from_config_dir(
 }
 
 pub fn load_config() -> anyhow::Result<RTWConfig> {
-    match dirs::config_dir() {
+    match dirs_next::config_dir() {
         None => Ok(RTWConfig::default()),
         Some(config_dir) => load_config_from_config_dir(&config_dir, RTWConfig::default()),
     }
