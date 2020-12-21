@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.0](https://crates.io/crates/rtw/2.2.0) Unreleased
 
 * Add `<id>` optional parameter to `continue`.
+* Add tip for using `--overlap` when activities are overlapping.
+* Clean timeline legend.
 
 ## [2.1.0](https://crates.io/crates/rtw/2.1.0) Dec 8, 2020
 
