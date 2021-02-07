@@ -28,6 +28,7 @@
          * [For a given date range](#for-a-given-date-range)
       * [Continue Activity](#continue-activity)
          * [Continue last finished activity](#continue-last-finished-activity)
+         * [Continue finished activity with id](#continue-finished-activity-with-id)
       * [Delete Activity](#delete-activity)
          * [Delete Activity with id](#delete-activity-with-id)
       * [Track a finished activity](#track-a-finished-activity)
@@ -306,7 +307,18 @@ rtw continue
 Example output:
 ```
 Tracking write doc
-Total    00:00:00
+```
+
+### Continue finished activity with id
+
+Example:
+```
+rtw continue 2
+```
+
+Example output:
+```
+Tracking read twir
 ```
 
 ## Delete Activity

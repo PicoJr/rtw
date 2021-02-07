@@ -1,6 +1,6 @@
 [package]
 name = "rtw"
-version = "2.1.0"
+version = "2.2.0"
 authors = ["PicoJr <picojr_dev@gmx.com>"]
 edition = "2018"
 repository = "https://github.com/PicoJr/rtw"
@@ -19,7 +19,7 @@ anyhow = "1.0"
 thiserror = "1.0.19"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-dirs = "2.0"
+dirs-next = "2.0.0"
 chrono = { version = "0.4", features = ["serde"] }
 htp = "0.2.1"
 config = "0.10.1"

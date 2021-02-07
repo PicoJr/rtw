@@ -28,7 +28,7 @@ pub enum RTWAction {
     Stop(DateTimeW, Option<ActivityId>),
     Summary((DateTimeW, DateTimeW), bool, bool, bool),
     DumpICal((DateTimeW, DateTimeW)),
-    Continue,
+    Continue(Option<ActivityId>),
     Delete(ActivityId),
     DisplayCurrent,
     Timeline((DateTimeW, DateTimeW)),
@@ -127,7 +127,10 @@ where
                 cli_helper::parse_timeline_args(sub_m, clock)?;
             Ok(RTWAction::Timeline((range_start, range_end)))
         }
-        ("continue", Some(_sub_m)) => Ok(RTWAction::Continue),
+        ("continue", Some(sub_m)) => {
+            let continue_id_maybe = cli_helper::parse_continue_args(sub_m)?;
+            Ok(RTWAction::Continue(continue_id_maybe))
+        }
         ("delete", Some(sub_m)) => {
             let id = cli_helper::parse_delete_args(sub_m)?;
             Ok(RTWAction::Delete(id))
@@ -275,10 +278,11 @@ where
             }
             Ok(RTWMutation::Pure)
         }
-        RTWAction::Continue => {
+        RTWAction::Continue(activity_id) => {
             let activities = service.get_finished_activities()?;
-            let last_activity_maybe = activities.last();
-            match last_activity_maybe {
+            let activity_id = activity_id.unwrap_or(0); // id 0 == last finished activity
+            let continued_maybe = activities.iter().find(|(id, _a)| *id == activity_id);
+            match continued_maybe {
                 None => {
                     println!("No activity to continue from.");
                     Ok(RTWMutation::Pure)

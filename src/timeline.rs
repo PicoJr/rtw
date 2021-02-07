@@ -231,16 +231,16 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Re
                 ),
             })?;
         let timeline = legend.iter().zip(data.iter());
-        for (i, (legend_timelines, data_timelines)) in timeline.enumerate() {
-            for line in legend_timelines {
-                if i == 0 {
+        for (legend_timelines, data_timelines) in timeline {
+            for (j, line) in legend_timelines.iter().enumerate() {
+                if j == 0 {
                     rendered.push(format!("{}{:>8}", line, day_month));
                 } else {
                     rendered.push(format!("{}{:>8}", line, " ".to_string()));
                 }
             }
-            for line in data_timelines {
-                if i == 0 {
+            for (j, line) in data_timelines.iter().enumerate() {
+                if j == 0 {
                     rendered.push(format!("{}{}", line, total_string));
                 } else {
                     rendered.push(format!("{}{:>8}", line, " ".to_string()));

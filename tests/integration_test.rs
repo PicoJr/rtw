@@ -236,6 +236,64 @@ mod tests {
     }
 
     #[test]
+    fn continue_last() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("Recorded foo"));
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("continue")
+            .assert()
+            .success()
+            .stdout("Tracking foo\n");
+    }
+
+    #[test]
+    fn continue_id_1() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("09:00")
+            .arg("-")
+            .arg("10:00")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("track")
+            .arg("10:00")
+            .arg("-")
+            .arg("11:00")
+            .arg("unexpected")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("continue")
+            .arg("1") // next to last
+            .assert()
+            .success()
+            .stdout("Tracking foo\n");
+    }
+
+    #[test]
     fn delete_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();
