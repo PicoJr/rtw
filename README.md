@@ -42,7 +42,7 @@ cargo install rtw
 
 ### Build From Source
 
-rtw compiles with Rust 1.39.0 (stable) or newer.
+rtw compiles with Rust 1.42.0 (stable) or newer.
 
 Clone and build from source:
 ```
