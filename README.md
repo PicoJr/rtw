@@ -5,7 +5,6 @@
 |Branch|Status|
 |------|------|
 |[master](https://github.com/PicoJr/rtw/tree/master)|![Build Status](https://github.com/PicoJr/rtw/workflows/Rust/badge.svg?branch=master)|
-|[dev](https://github.com/PicoJr/rtw/tree/dev)      |![Build Status](https://github.com/PicoJr/rtw/workflows/Rust/badge.svg?branch=dev)|
 
 # RTW - Rust Time Watcher
 
@@ -140,10 +139,6 @@ RTW doesn't create the config file for you, but it looks for one in the followin
 4. `$HOME/.config/rtw_config.json`
 
 see `example` folder for a default config file.
-
-## Development
-
-Development occurs on `dev`, releases are made on `master` branch.
 
 ## Implementation
 
