@@ -110,12 +110,17 @@ fn bounds(interval: &Interval) -> (f64, f64) {
 }
 
 // label for activities
+// Wrapping with `Option` is unnecessary but this signature
+// is expected by `Renderer`
+#[allow(clippy::unnecessary_wraps)]
 fn label(interval: &Interval, colors: &[RGB]) -> Option<Label> {
     let (activity_id, activity) = interval;
     Some((activity.get_title(), color(*activity_id, colors)))
 }
 
 // label for legend
+// Wrapping with `Option` is unnecessary but this signature
+// is expected by `Renderer`
 fn legend(interval: &Interval) -> Option<Label> {
     let (_activity_id, activity) = interval;
     let start_time: DateTime<Local> = activity.get_start_time().into();
