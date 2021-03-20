@@ -25,7 +25,7 @@ htp = "0.2.1"
 config = "0.10.1"
 ansi_term = "0.12.1"
 term_size = "0.3.2"
-tbl = "1.1.0-alpha.1"
+tbl = "1.1.0"
 icalendar = "0.9.0"
 itertools = "0.9"
 
