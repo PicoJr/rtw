@@ -130,6 +130,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrono-humanize"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8164ae3089baf04ff71f32aeb70213283dcd236dce8bc976d00b17a458f5f71c"
+dependencies = [
+ "chrono",
+]
+
+[[package]]
 name = "clap"
 version = "2.33.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -609,6 +618,7 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "chrono",
+ "chrono-humanize",
  "clap",
  "config",
  "dirs-next",

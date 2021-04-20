@@ -38,9 +38,9 @@ impl From<Duration> for DurationW {
     }
 }
 
-impl Into<Duration> for DurationW {
-    fn into(self) -> Duration {
-        self.0
+impl From<DurationW> for Duration {
+    fn from(d: DurationW) -> Self {
+        d.0
     }
 }
 

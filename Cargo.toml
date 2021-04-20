@@ -28,6 +28,7 @@ term_size = "0.3.2"
 tbl = "1.1.0"
 icalendar = "0.9.0"
 itertools = "0.9"
+chrono-humanize = "0.1.2"
 
 [dev-dependencies]
 tempfile = "3"

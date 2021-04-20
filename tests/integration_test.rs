@@ -19,6 +19,61 @@ mod tests {
     }
 
     #[test]
+    fn status_none() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("status")
+            .assert()
+            .success()
+            .stdout("\n");
+    }
+
+    #[test]
+    fn status_something() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("status")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("foo\n"));
+    }
+
+    #[test]
+    fn status_something_format() {
+        let test_dir = tempdir().expect("could not create temp directory");
+        let test_dir_path = test_dir.path().to_str().unwrap();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("start")
+            .arg("foo")
+            .assert()
+            .success();
+        let mut cmd = Command::cargo_bin("rtw").unwrap();
+        cmd.arg("-d")
+            .arg(test_dir_path)
+            .arg("status")
+            .arg("--format")
+            .arg("{ongoing} {duration}")
+            .assert()
+            .success()
+            .stdout(predicates::str::contains("foo"));
+    }
+
+    #[test]
     fn summary_none() {
         let test_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_dir.path().to_str().unwrap();

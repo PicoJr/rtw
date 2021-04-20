@@ -35,6 +35,7 @@
          * [Track a finished activity with dates](#track-a-finished-activity-with-dates)
          * [Track a finished activity the same day](#track-a-finished-activity-the-same-day)
       * [Track an activity and provide a long description](#track-an-activity-and-provide-a-long-description)
+      * [Display current status (for usage in scripts/status bars/prompts...)](#display-current-status-for-usage-in-scriptsstatus-barsprompts)
       * [For multitasking people](#for-multitasking-people)
          * [Start (overlapping) activities](#start-overlapping-activities)
          * [Stop ongoing activity](#stop-ongoing-activity)
@@ -387,6 +388,21 @@ output:
 ```
 breakfast 2020-07-11T09:00:00 2020-07-11T10:00:00 01:00:00
 I ate delicious pancakes
+```
+
+## Display current status (for usage in scripts/status bars/prompts...)
+
+Example:
+
+```
+rtw start foo
+rtw status --format "{id} {ongoing} {start} {human_duration} {duration}"
+```
+
+output:
+
+```
+0 foo 2021-04-20T19:31:09 2 hours ago 02:20:53
 ```
 
 ## For multitasking people

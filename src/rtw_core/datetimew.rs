@@ -17,10 +17,9 @@ impl From<DateTime<Local>> for DateTimeW {
         DateTimeW(dt)
     }
 }
-
-impl Into<DateTime<Local>> for DateTimeW {
-    fn into(self) -> DateTime<Local> {
-        self.0
+impl From<DateTimeW> for DateTime<Local> {
+    fn from(dt: DateTimeW) -> Self {
+        dt.0
     }
 }
 

@@ -31,7 +31,7 @@ impl Default for FinishedActivities {
 #[derive(Error, Debug)]
 pub enum JsonStorageError {
     #[error("storage io error")]
-    IOError(#[from] std::io::Error),
+    IoError(#[from] std::io::Error),
     #[error("(de)serialization failed")]
     SerdeJsonError(#[from] serde_json::error::Error),
 }
