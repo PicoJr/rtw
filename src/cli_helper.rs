@@ -314,6 +314,16 @@ pub fn get_app() -> App<'static, 'static> {
                         .required(true),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("status")
+                .about("print status data, suitable for use in status bar or prompts")
+                .arg(
+                    Arg::with_name("format")
+                        .long("format")
+                        .takes_value(true)
+                        .help(concat!("format string e.g. \"{ongoing}\"")),
+                ),
+        )
 }
 
 pub fn parse_start_args(
@@ -465,6 +475,11 @@ pub fn parse_completion_args(completion_m: &ArgMatches) -> anyhow::Result<clap::
         None => Err(anyhow::anyhow!("missing shell")), // should never happen thanks to clap check
         _ => Err(anyhow::anyhow!("invalid shell")),    // should never happen thanks to clap check
     }
+}
+
+pub fn parse_status_args(status_m: &ArgMatches) -> Option<String> {
+    let format_maybe = status_m.value_of("format");
+    format_maybe.map(String::from)
 }
 
 #[cfg(test)]

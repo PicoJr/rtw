@@ -9,8 +9,8 @@ use std::cmp::max;
 use std::iter::FromIterator;
 use tbl::{Block, Bound, RenderBlock, Renderer, TBLError};
 
-type RGB = (u8, u8, u8);
-type Label = (String, RGB);
+type Rgb = (u8, u8, u8);
+type Label = (String, Rgb);
 type Interval = (ActivityId, Activity);
 
 const DEFAULT_TERMINAL_SIZE: usize = 90;
@@ -91,7 +91,7 @@ fn render(b: &Block<(String, (u8, u8, u8))>) -> RenderBlock {
     }
 }
 
-fn color(id: ActivityId, colors: &[RGB]) -> RGB {
+fn color(id: ActivityId, colors: &[Rgb]) -> Rgb {
     let color = colors.get(id % colors.len());
     match color {
         None => (0, 0, 0),
@@ -113,7 +113,7 @@ fn bounds(interval: &Interval) -> (f64, f64) {
 // Wrapping with `Option` is unnecessary but this signature
 // is expected by `Renderer`
 #[allow(clippy::unnecessary_wraps)]
-fn label(interval: &Interval, colors: &[RGB]) -> Option<Label> {
+fn label(interval: &Interval, colors: &[Rgb]) -> Option<Label> {
     let (activity_id, activity) = interval;
     Some((activity.get_title(), color(*activity_id, colors)))
 }
@@ -188,7 +188,7 @@ fn days(activities: &[Interval]) -> (i32, i32) {
     (min_day, max_day)
 }
 
-pub(crate) fn render_days(activities: &[Interval], colors: &[RGB]) -> anyhow::Result<Vec<String>> {
+pub(crate) fn render_days(activities: &[Interval], colors: &[Rgb]) -> anyhow::Result<Vec<String>> {
     let (width, _height) = term_size::dimensions().unwrap_or((DEFAULT_TERMINAL_SIZE, 0));
     let (min_second, max_second) = day_bounds(activities);
     let (min_day, max_day) = days(activities);

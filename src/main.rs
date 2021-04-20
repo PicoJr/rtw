@@ -5,7 +5,7 @@ use crate::chrono_clock::ChronoClock;
 use crate::cli_helper::get_app;
 use crate::json_storage::JsonStorage;
 use crate::rtw_cli::{dry_run_action, run, run_mutation};
-use crate::rtw_config::{load_config, RTWConfig};
+use crate::rtw_config::{load_config, RtwConfig};
 use crate::service::Service;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -18,6 +18,7 @@ mod rtw_cli;
 mod rtw_config;
 mod rtw_core;
 mod service;
+mod status;
 mod time_tools;
 mod timeline;
 
@@ -27,7 +28,7 @@ fn main() -> anyhow::Result<()> {
     let matches = app.get_matches();
     let config = load_config()?;
     let config = if matches.is_present("default") {
-        RTWConfig::default()
+        RtwConfig::default()
     } else {
         config
     };

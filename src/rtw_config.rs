@@ -13,19 +13,19 @@ const DEFAULT_CONFIG: &str = r#"
     }
 "#;
 
-type RGB = (u8, u8, u8);
+type Rgb = (u8, u8, u8);
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct RTWConfig {
+pub struct RtwConfig {
     pub storage_dir_path: PathBuf,
-    pub timeline_colors: Vec<RGB>,
+    pub timeline_colors: Vec<Rgb>,
     pub deny_overlapping: bool,
 }
 
-impl RTWConfig {
+impl RtwConfig {
     pub fn default() -> Self {
         let home_dir = dirs_next::home_dir().expect("could not find home dir");
-        RTWConfig {
+        RtwConfig {
             storage_dir_path: home_dir, // stores finished activities
             timeline_colors: vec![(183, 28, 28), (26, 35, 126), (0, 77, 64), (38, 50, 56)],
             deny_overlapping: true,
@@ -33,7 +33,7 @@ impl RTWConfig {
     }
 
     pub fn deny_overlapping(self, deny: bool) -> Self {
-        RTWConfig {
+        RtwConfig {
             storage_dir_path: self.storage_dir_path,
             timeline_colors: self.timeline_colors,
             deny_overlapping: deny,
@@ -43,8 +43,8 @@ impl RTWConfig {
 
 fn load_config_from_config_dir(
     config_dir: &PathBuf,
-    default_config: RTWConfig,
-) -> anyhow::Result<RTWConfig> {
+    default_config: RtwConfig,
+) -> anyhow::Result<RtwConfig> {
     let mut settings = config::Config::default();
     let config_path = config_dir.join("rtw").join("rtw_config.json");
     let config_path_fallback = config_dir.join("rtw_config.json");
@@ -56,20 +56,20 @@ fn load_config_from_config_dir(
         .merge(config::File::from_str(DEFAULT_CONFIG, FileFormat::Json))?
         .merge(config::File::with_name(config_path.to_str().unwrap()).required(false))?
         .merge(config::File::with_name(config_path_fallback.to_str().unwrap()).required(false))?;
-    let rtw_config: RTWConfig = settings.try_into()?;
+    let rtw_config: RtwConfig = settings.try_into()?;
     Ok(rtw_config)
 }
 
-pub fn load_config() -> anyhow::Result<RTWConfig> {
+pub fn load_config() -> anyhow::Result<RtwConfig> {
     match dirs_next::config_dir() {
-        None => Ok(RTWConfig::default()),
-        Some(config_dir) => load_config_from_config_dir(&config_dir, RTWConfig::default()),
+        None => Ok(RtwConfig::default()),
+        Some(config_dir) => load_config_from_config_dir(&config_dir, RtwConfig::default()),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::rtw_config::{load_config_from_config_dir, RTWConfig};
+    use crate::rtw_config::{load_config_from_config_dir, RtwConfig};
     use std::fs;
     use std::fs::File;
     use std::io::Write;
@@ -82,7 +82,7 @@ mod tests {
     fn example_config_valid() {
         let example_config = PathBuf::from_str("example/rtw_config.json").unwrap();
         let reader = File::open(example_config);
-        let config: serde_json::Result<RTWConfig> = serde_json::from_reader(reader.unwrap());
+        let config: serde_json::Result<RtwConfig> = serde_json::from_reader(reader.unwrap());
         assert!(config.is_ok())
     }
 
@@ -90,8 +90,8 @@ mod tests {
     fn test_config_not_found_in_config_dir() {
         let test_config_dir = tempdir().expect("could not create temp directory");
         let test_dir_path = test_config_dir.path().to_path_buf();
-        let config = load_config_from_config_dir(&test_dir_path, RTWConfig::default());
-        assert_eq!(config.unwrap(), RTWConfig::default())
+        let config = load_config_from_config_dir(&test_dir_path, RtwConfig::default());
+        assert_eq!(config.unwrap(), RtwConfig::default())
     }
 
     #[test]
@@ -103,7 +103,7 @@ mod tests {
         writeln!(tmp_config, "{{\n\"storage_dir_path\": \"/expected\"\n}}")?;
         let config = load_config_from_config_dir(
             &test_config_dir.path().to_path_buf(),
-            RTWConfig::default(),
+            RtwConfig::default(),
         );
         assert_eq!(config.unwrap().storage_dir_path, expected);
         Ok(())
@@ -120,7 +120,7 @@ mod tests {
         writeln!(tmp_config, "{{\n\"storage_dir_path\": \"/expected\"\n}}")?;
         let config = load_config_from_config_dir(
             &test_config_dir.path().to_path_buf(),
-            RTWConfig::default(),
+            RtwConfig::default(),
         );
         assert_eq!(config.unwrap().storage_dir_path, expected);
         Ok(())
