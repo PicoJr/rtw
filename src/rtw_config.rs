@@ -4,7 +4,7 @@ extern crate config;
 use self::config::FileFormat;
 use serde::Deserialize;
 use serde::Serialize;
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 
 const DEFAULT_CONFIG: &str = r#"
     {

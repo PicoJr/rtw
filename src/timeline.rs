@@ -221,17 +221,21 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[Rgb]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
                 ),
             })?;
-        let legend = Renderer::new(day_activities.as_slice(), &bounds, &|interval| Some(legend(interval)))
-            .with_renderer(&render)
-            .with_length(available_length)
-            .with_boundaries((min_second, max_second))
-            .render()
-            .map_err(|e| match e {
-                TBLError::NoBoundaries => anyhow!("failed to create timeline"),
-                TBLError::Intersection(left, right) => anyhow!(
-                    "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
-                ),
-            })?;
+        let legend = Renderer::new(day_activities.as_slice(), &bounds, &|interval| {
+            Some(legend(interval))
+        })
+        .with_renderer(&render)
+        .with_length(available_length)
+        .with_boundaries((min_second, max_second))
+        .render()
+        .map_err(|e| match e {
+            TBLError::NoBoundaries => anyhow!("failed to create timeline"),
+            TBLError::Intersection(left, right) => anyhow!(
+                "failed to create timeline: some activities are overlapping: {:?} intersects {:?}",
+                left,
+                right
+            ),
+        })?;
         let timeline = legend.iter().zip(data.iter());
         for (legend_timelines, data_timelines) in timeline {
             for (j, line) in legend_timelines.iter().enumerate() {
