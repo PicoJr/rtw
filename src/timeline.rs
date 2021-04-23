@@ -118,21 +118,18 @@ fn label(interval: &Interval, colors: &[Rgb]) -> Option<Label> {
     Some((activity.get_title(), color(*activity_id, colors)))
 }
 
-// label for legend
-// Wrapping with `Option` is unnecessary but this signature
-// is expected by `Renderer`
-fn legend(interval: &Interval) -> Option<Label> {
+fn legend(interval: &Interval) -> Label {
     let (_activity_id, activity) = interval;
     let start_time: DateTime<Local> = activity.get_start_time().into();
     let end_time: DateTime<Local> = activity.get_stop_time().into();
-    Some((
+    (
         format!(
             "{}-{}",
             start_time.format("%H:%M"),
             end_time.format("%H:%M")
         ),
         (0, 0, 0),
-    ))
+    )
 }
 
 // day total activities duration
@@ -224,7 +221,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[Rgb]) -> anyhow::Re
                     "failed to create timeline: some activities are overlapping: {:?} intersects {:?}", left, right
                 ),
             })?;
-        let legend = Renderer::new(day_activities.as_slice(), &bounds, &legend)
+        let legend = Renderer::new(day_activities.as_slice(), &bounds, &|interval| Some(legend(interval)))
             .with_renderer(&render)
             .with_length(available_length)
             .with_boundaries((min_second, max_second))

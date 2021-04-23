@@ -321,7 +321,9 @@ pub fn get_app() -> App<'static, 'static> {
                     Arg::with_name("format")
                         .long("format")
                         .takes_value(true)
-                        .help(concat!("format string e.g. \"{ongoing}\"")),
+                        .help(concat!(
+                        "format string e.g. \"{id} {ongoing} {start} {human_duration} {duration}\""
+                    )),
                 ),
         )
 }

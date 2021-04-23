@@ -28,7 +28,7 @@ mod tests {
             .arg("status")
             .assert()
             .success()
-            .stdout("\n");
+            .stdout("");
     }
 
     #[test]

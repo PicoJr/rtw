@@ -4,7 +4,7 @@ extern crate config;
 use self::config::FileFormat;
 use serde::Deserialize;
 use serde::Serialize;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 const DEFAULT_CONFIG: &str = r#"
     {
@@ -42,7 +42,7 @@ impl RtwConfig {
 }
 
 fn load_config_from_config_dir(
-    config_dir: &PathBuf,
+    config_dir: &Path,
     default_config: RtwConfig,
 ) -> anyhow::Result<RtwConfig> {
     let mut settings = config::Config::default();

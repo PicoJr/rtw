@@ -12,25 +12,30 @@ pub(crate) fn format_status<S, Cl>(
     format_string: Option<FormatString>,
     service: &Service<S>,
     clock: &Cl,
-) -> anyhow::Result<String>
+) -> anyhow::Result<Option<String>>
 where
     S: Storage,
     Cl: Clock,
 {
     let format_string = format_string.unwrap_or_else(|| String::from("{ongoing}"));
     let now = clock.get_time();
-    let status = service
-        .get_ongoing_activities()?
-        .iter()
-        .map(|(id, ongoing)| {
-            let started: Duration = (ongoing.start_time - now).into();
-            format_string
-                .replace("{id}", &format!("{}", id))
-                .replace("{ongoing}", &ongoing.get_title())
-                .replace("{start}", &format!("{}", ongoing.start_time))
-                .replace("{human_duration}", &format!("{}", HumanTime::from(started)))
-                .replace("{duration}", &format!("{}", now - ongoing.start_time))
-        })
-        .join(" ");
-    Ok(status)
+    let ongoing_activities = service.get_ongoing_activities()?;
+    if !ongoing_activities.is_empty() {
+        Ok(Some(
+            ongoing_activities
+                .iter()
+                .map(|(id, ongoing)| {
+                    let started: Duration = (ongoing.start_time - now).into();
+                    format_string
+                        .replace("{id}", &format!("{}", id))
+                        .replace("{ongoing}", &ongoing.get_title())
+                        .replace("{start}", &format!("{}", ongoing.start_time))
+                        .replace("{human_duration}", &format!("{}", HumanTime::from(started)))
+                        .replace("{duration}", &format!("{}", now - ongoing.start_time))
+                })
+                .join(" "),
+        ))
+    } else {
+        Ok(None)
+    }
 }

@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+* Doc add starship prompt instructions
 * Add `status` subcommand
-* Fix clippy lints
+* Fix all clippy lints
 
 ## [2.2.0](https://crates.io/crates/rtw/2.2.0) Mar 20, 2021
 

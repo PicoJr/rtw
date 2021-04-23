@@ -58,6 +58,18 @@ Download the corresponding archive from the [Release page](https://github.com/pi
 
 Please see [shell completion](shell-completion.md).
 
+### [Starship](https://github.com/starship/starship) prompt integration
+
+```toml
+# starship.toml                                                                                                                                                                                                                                                                                      PicoJr
+[custom.rtw]
+command = """ rtw status --format "{ongoing} {human_duration}" """
+when = "test -f ~/.rtw.json"
+shell = "sh"
+```
+
+> ~/.rtw.json is the file where `rtw` stores ongoing activities
+
 ## Changelog
 
 Please see the [CHANGELOG](CHANGELOG.md) for a release history.

@@ -410,8 +410,10 @@ where
             Ok(RtwMutation::Pure)
         }
         RtwAction::Status(format_maybe) => {
-            let status = format_status(format_maybe, service, clock)?;
-            println!("{}", status);
+            let status_maybe = format_status(format_maybe, service, clock)?;
+            if let Some(status) = status_maybe {
+                println!("{}", status);
+            }
             Ok(RtwMutation::Pure)
         }
     }
