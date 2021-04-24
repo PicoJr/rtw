@@ -65,7 +65,7 @@ Please see [shell completion](shell-completion.md).
 [custom.rtw]
 command = """ rtw status --format "{ongoing} {human_duration}" """
 when = "test -f ~/.rtw.json"
-shell = "sh"
+shell = ["bash", "--noprofile", "--norc"]
 ```
 
 > ~/.rtw.json is the file where `rtw` stores ongoing activities
