@@ -61,7 +61,7 @@ Please see [shell completion](shell-completion.md).
 ### [Starship](https://github.com/starship/starship) prompt integration
 
 ```toml
-# starship.toml                                                                                                                                                                                                                                                                                      PicoJr
+# starship.toml
 [custom.rtw]
 command = """ rtw status --format "{ongoing} {human_duration}" """
 when = "test -f ~/.rtw.json"
