@@ -202,7 +202,7 @@ where
             Ok(RtwMutation::Track(tracked))
         }
         RtwAction::Stop(stop_time, activity_id) => {
-            match get_ongoing_activity(activity_id, &service)? {
+            match get_ongoing_activity(activity_id, service)? {
                 Optional(None) => {
                     println!("There is no active time tracking.");
                     Ok(RtwMutation::Pure)

@@ -6,7 +6,6 @@ use ansi_term::{Color, Style};
 use anyhow::anyhow;
 use chrono::{DateTime, Datelike, Duration, Local, Timelike};
 use std::cmp::max;
-use std::iter::FromIterator;
 use tbl::{Block, Bound, RenderBlock, Renderer, TBLError};
 
 type Rgb = (u8, u8, u8);
@@ -28,7 +27,7 @@ fn chunkify(s: &str, size: usize) -> Vec<String> {
         let padded_remainder: Vec<char> = remainder.iter().chain(padding.iter()).cloned().collect();
         let chunks: Vec<String> = chunks
             .chain(std::iter::once(padded_remainder.as_slice()))
-            .map(|s| String::from_iter(s.iter()))
+            .map(|s| s.iter().collect::<String>())
             .collect();
         chunks
     }

@@ -33,7 +33,7 @@ fn split_time_range_from_tags(
     match sp.as_slice() {
         [range_start, range_end_and_tags] => {
             let range_start_maybe = TimeTools::time_from_str(&range_start.join(" "), clock);
-            let (range_end, activity_tags) = split_time_clue_from_tags(&range_end_and_tags, clock);
+            let (range_end, activity_tags) = split_time_clue_from_tags(range_end_and_tags, clock);
             match range_start_maybe {
                 Ok(range_start) => Ok((range_start, range_end, activity_tags)),
                 Err(e) => Err(anyhow::anyhow!(e)),
