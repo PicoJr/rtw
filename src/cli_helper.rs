@@ -363,10 +363,7 @@ pub fn parse_stop_args(
     stop_m: &ArgMatches,
     clock: &dyn Clock,
 ) -> anyhow::Result<(Time, Option<ActivityId>)> {
-    let stopped_id_maybe = stop_m
-        .value_of("id")
-        .map(|id_str| usize::from_str(id_str))
-        .transpose()?;
+    let stopped_id_maybe = stop_m.value_of("id").map(usize::from_str).transpose()?;
     let time_arg = stop_m.values_of("time");
     if let Some(values) = time_arg {
         let values: Vec<String> = values.map(String::from).collect();
@@ -379,18 +376,12 @@ pub fn parse_stop_args(
 }
 
 pub fn parse_continue_args(continue_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
-    let continue_id_maybe = continue_m
-        .value_of("id")
-        .map(|id_str| usize::from_str(id_str))
-        .transpose()?;
+    let continue_id_maybe = continue_m.value_of("id").map(usize::from_str).transpose()?;
     Ok(continue_id_maybe)
 }
 
 pub fn parse_cancel_args(cancel_m: &ArgMatches) -> anyhow::Result<Option<ActivityId>> {
-    let cancelled_id_maybe = cancel_m
-        .value_of("id")
-        .map(|id_str| usize::from_str(id_str))
-        .transpose()?;
+    let cancelled_id_maybe = cancel_m.value_of("id").map(usize::from_str).transpose()?;
     Ok(cancelled_id_maybe)
 }
 
@@ -456,9 +447,7 @@ pub fn parse_timeline_args(
 }
 
 pub fn parse_delete_args(delete_m: &ArgMatches) -> anyhow::Result<ActivityId> {
-    let id_opt = delete_m
-        .value_of("id")
-        .map(|id_str| usize::from_str(id_str));
+    let id_opt = delete_m.value_of("id").map(usize::from_str);
     if let Some(Ok(id)) = id_opt {
         Ok(id)
     } else {

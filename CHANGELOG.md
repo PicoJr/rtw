@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.1](https://crates.io/crates/rtw/2.3.1) Jun 6, 2021
 
+* Fix CVE-2022-24713
 * Remove superfluous config crate features, fixes CVE-2020-25573.
 * Bump `htp` to `0.4.0` cf [htp changelog](https://github.com/PicoJr/htp/blob/master/CHANGELOG.md)
 

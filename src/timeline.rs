@@ -192,7 +192,7 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[Rgb]) -> anyhow::Re
     for day in min_day..=max_day {
         let day_activities: Vec<Interval> = activities
             .iter()
-            .flat_map(|interval| split_interval(interval))
+            .flat_map(split_interval)
             .filter(|(_, a)| {
                 let start_time: DateTime<Local> = a.get_start_time().into();
                 start_time.num_days_from_ce() == day
@@ -241,14 +241,14 @@ pub(crate) fn render_days(activities: &[Interval], colors: &[Rgb]) -> anyhow::Re
                 if j == 0 {
                     rendered.push(format!("{}{:>8}", line, day_month));
                 } else {
-                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                    rendered.push(format!("{}{:>8}", line, " "));
                 }
             }
             for (j, line) in data_timelines.iter().enumerate() {
                 if j == 0 {
                     rendered.push(format!("{}{}", line, total_string));
                 } else {
-                    rendered.push(format!("{}{:>8}", line, " ".to_string()));
+                    rendered.push(format!("{}{:>8}", line, " "));
                 }
             }
         }
