@@ -1,6 +1,6 @@
 [package]
 name = "rtw"
-version = "2.3.0"
+version = "2.3.1"
 authors = ["PicoJr <picojr_dev@gmx.com>"]
 edition = "2018"
 repository = "https://github.com/PicoJr/rtw"
@@ -22,7 +22,7 @@ serde_json = "1.0"
 dirs-next = "2.0.0"
 chrono = { version = "0.4", features = ["serde"] }
 htp = "0.4.0"
-config = "0.10.1"
+config = { version = "0.10.1", default-features = false, features = ["json"] }
 ansi_term = "0.12.1"
 term_size = "0.3.2"
 tbl = "1.1.0"
